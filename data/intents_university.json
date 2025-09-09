@@ -17,8 +17,8 @@
     },
 
     {
-      "tag": "admission_requirements",
-      "patterns": ["what are the admission requirements", "how can i apply", "entry requirements", "eligibility for admission", "do i qualify to apply"],
+      "tag": "entry_requirements",
+      "patterns": ["what are the entry requirements", "how can i apply", "entry requirements", "eligibility for entry", "do i qualify to entry"],
       "responses": ["To apply, you’ll need: completed application form, official transcripts, minimum GPA 2.5 (UG) / 3.0 (PG), and English proficiency (IELTS/TOEFL)."]
     },
     {
@@ -45,7 +45,7 @@
     },
     {
       "tag": "payment_methods",
-      "patterns": ["how do i pay fees", "payment options", "can i pay online", "installments for tuition"],
+      "patterns": ["how do i pay fees", "payment options", "can i pay online", "installments for tuition", "fees"],
       "responses": ["Payment options: online banking/credit card, counter service, FPX. Installments available for selected programs via Finance Office."]
     },
 
@@ -117,7 +117,7 @@
     },
     {
       "tag": "exam_schedule",
-      "patterns": ["when are the exams", "exam timetable", "exam schedule", "finals week"],
+      "patterns": ["when are the exams", "exam timetable", "exam schedule", "finals week", "exam"],
       "responses": ["Exam timetables: Student Portal → Academics → Exam Timetable • Midterms Oct • Finals Dec."]
     },
     {
@@ -150,7 +150,7 @@
     {
       "tag": "fallback",
       "patterns": [],
-      "responses": ["Sorry, I didn't catch that. Try asking about requirements, tuition, scholarships, programs, library, housing, or contacts."]
+      "responses": ["Sorry, I didn't catch that. Try asking about entry requirements, fees, scholarships, programs, library, hostel, or contacts."]
     }
   ]
 }
