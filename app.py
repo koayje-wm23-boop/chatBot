@@ -59,23 +59,16 @@ def norm(s: str) -> str:
     return " ".join(s.lower().strip().split())
 
 def build_pattern_index(intents_json):
-    """
-    Returns:
-      - exact_map: {normalized_pattern: (tag, response_text)}
-      - contains_list: [(normalized_pattern, tag, response_text)] for substring matching
-      - patterns, pattern_to_label for retrieval fallback
-    """
     exact_map = {}
     contains_list = []
     patterns = []
     p2l = {}
-
     for it in intents_json["intents"]:
         tag = it["tag"]
         responses = it.get("responses", [])
         if not responses:
             continue
-        resp = responses[0]  # deterministic: ALWAYS first response
+        resp = responses[0]  # deterministic: first response always
         for p in it.get("patterns", []):
             np = norm(p)
             exact_map[np] = (tag, resp)
@@ -84,7 +77,7 @@ def build_pattern_index(intents_json):
             p2l[p] = tag
     return exact_map, contains_list, patterns, p2l
 
-# ---------- Start-up: ensure model exists, then load everything ----------
+# ---------- Start-up ----------
 if not artifacts_exist():
     train_now(DATA_PATH)
 
@@ -112,11 +105,9 @@ def retrieval_fallback(text, min_sim=0.12):
     return "fallback", 0.0
 
 def deterministic_response(intent: str) -> str:
-    # Always return the FIRST response from JSON for determinism.
     for it in intents_json["intents"]:
         if it["tag"] == intent and it.get("responses"):
             return it["responses"][0]
-    # fallback if somehow missing
     return label_to_responses.get("fallback", ["I'm not sure."])[0]
 
 # ---------------- Sidebar (simple) ----------------
@@ -132,16 +123,15 @@ with st.sidebar:
     st.header("UniHelp")
     if st.button("➕ New Chat"):
         new_chat()
-        st.experimental_rerun()
+        st.rerun()
     retrain = st.button("🔁 Retrain model")
     threshold = st.slider("Confidence threshold (used only if no pattern match)", 0.0, 1.0, 0.45, 0.01)
 
 if retrain:
     train_now(DATA_PATH)
-    # Rebuild pattern index after retrain (in case JSON changed)
     intents_json = load_intents_json()
     exact_map, contains_list, patterns, pattern_to_label = build_pattern_index(intents_json)
-    st.experimental_rerun()
+    st.rerun()
 
 # ---------------- Styling ----------------
 st.markdown("""
@@ -168,14 +158,14 @@ if user_text:
     with st.chat_message("user"):
         st.markdown(f"<div class='bubble user'>{user_text}</div>", unsafe_allow_html=True)
 
-    # 1) PATTERN-FIRST: exact match (case-insensitive, trimmed)
+    # 1) Exact match
     nuser = norm(user_text)
     if nuser in exact_map:
         tag, resp = exact_map[nuser]
         route = "pattern_exact"
         bot_text = resp
 
-    # 2) PATTERN-CONTAINS: relaxed substring match (safe, deterministic)
+    # 2) Contains match
     else:
         found = None
         for npat, tag, resp in contains_list:
@@ -186,20 +176,18 @@ if user_text:
             route = "pattern_contains"
             bot_text = resp
         else:
-            # 3) ML classifier (only if no pattern matched)
+            # 3) ML classification
             intent, score = predict_intent(user_text)
             if score < threshold:
                 intent, score = retrieval_fallback(user_text)
             bot_text = deterministic_response(intent)
             route = "ml" if intent != "fallback" else "fallback"
-            # log ML route with score/intent
             log_row(st.session_state.chat_id, user_text, bot_text, route, intent=intent, score=score)
 
     with st.chat_message("assistant"):
         st.markdown(f"<div class='bubble bot'>{bot_text}</div>", unsafe_allow_html=True)
 
-    # Log deterministic routes too
-    if 'route' in locals() and (route.startswith("pattern")):
+    if 'route' in locals() and route.startswith("pattern"):
         log_row(st.session_state.chat_id, user_text, bot_text, route, intent=tag, score=1.0)
 
     st.session_state.messages.append({"role":"assistant","content":bot_text})
