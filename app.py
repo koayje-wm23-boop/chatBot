@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 
 # ---------------- Basic setup ----------------
-st.set_page_config(page_title="🎓 UniHelp", page_icon="🎓", layout="centered")
+st.set_page_config(page_title="UniHelp", page_icon="🎓", layout="centered")
 
 MODEL_DIR   = "models"
 DATA_PATH   = "data/intents_university.json"
