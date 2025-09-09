@@ -1,16 +1,30 @@
-import os, json, random, datetime
 import streamlit as st
-import pandas as pd
+import json, os, random, datetime
 import joblib
+import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
-from train_evaluate import main as train_main
 
-st.set_page_config(page_title="UniHelp Chatbot", page_icon="🎓", layout="centered")
+# ---------- Page setup ----------
+st.set_page_config(page_title="UniHelp — Streamlit Chatbot", page_icon="🎓", layout="centered")
 
+# ---------- Paths (match your repo) ----------
 MODEL_DIR = "models"
 DATA_PATH = "data/intents_university.json"
 LOG_PATH = "logs/chat_logs.csv"
 
+# ---------- Small CSS for a clean look ----------
+st.markdown("""
+<style>
+/* make chat a bit wider and cleaner */
+section.main > div { max-width: 900px; margin: auto; }
+.chat-bubble { border-radius: 14px; padding: 10px 14px; margin: 6px 0; }
+.user { background: #0e1117; border: 1px solid #2b2b2b; }
+.bot  { background: #161a23; border: 1px solid #2b2b2b; }
+.small { color:#9aa0a6;font-size:0.85rem }
+</style>
+""", unsafe_allow_html=True)
+
+# ---------- Cached artifacts ----------
 @st.cache_resource
 def load_artifacts():
     model = joblib.load(os.path.join(MODEL_DIR, "intent_model.joblib"))
@@ -18,24 +32,14 @@ def load_artifacts():
     vectorizer = model.named_steps["tfidf"]
     return model, vectorizer, label_to_responses
 
-def predict_intent(model, text: str):
+def predict_intent(model, text):
     probs = model.predict_proba([text])[0]
     labels = model.classes_
-    idx = probs.argmax()
-    return labels[idx], float(probs[idx])
+    best_idx = probs.argmax()
+    return labels[best_idx], float(probs[best_idx])
 
 def get_response(intent, label_to_responses):
-    responses = label_to_responses.get(intent) or label_to_responses.get("fallback", ["I'm not sure."])
-    return random.choice(responses)
-
-def retrieval_fallback(vectorizer, patterns, text, pattern_to_label):
-    X = vectorizer.transform([text])
-    pat_mat = vectorizer.transform(patterns)
-    sims = cosine_similarity(X, pat_mat)[0]
-    idx = sims.argmax()
-    if sims[idx] > 0.2:
-        return pattern_to_label[patterns[idx]], float(sims[idx])
-    return "fallback", float(sims[idx])
+    return random.choice(label_to_responses.get(intent, label_to_responses.get("fallback", ["I'm not sure."])))
 
 def ensure_logs():
     os.makedirs("logs", exist_ok=True)
@@ -44,15 +48,15 @@ def ensure_logs():
 
 def log_interaction(user_text, bot_text, intent, score, feedback=None):
     ensure_logs()
-    ts = datetime.datetime.now().isoformat()
+    ts = datetime.datetime.now().isoformat(timespec="seconds")
     row = {"timestamp": ts, "user": user_text, "bot": bot_text, "intent": intent, "score": score, "feedback": feedback}
-    df = pd.DataFrame([row])
-    header = not os.path.exists(LOG_PATH) or os.path.getsize(LOG_PATH) == 0
-    df.to_csv(LOG_PATH, mode="a", header=header, index=False)
+    pd.DataFrame([row]).to_csv(LOG_PATH, mode="a", header=False, index=False)
 
+# ---------- Header ----------
 st.title("🎓 UniHelp — Streamlit Chatbot")
-st.caption("TF‑IDF + Logistic Regression intent classifier with templated responses.")
+st.caption("TF-IDF + Logistic Regression intent classifier with templated responses.")
 
+# ---------- Sidebar ----------
 with st.sidebar:
     st.header("Setup")
     retrain = st.button("Train / Retrain Model")
@@ -60,25 +64,25 @@ with st.sidebar:
     st.markdown("Upload a custom intents JSON to fine-tune:")
     uploaded = st.file_uploader("intents.json", type=["json"], accept_multiple_files=False)
 
+# ---------- Training entry point ----------
 if retrain:
-    # If user uploaded a dataset, save it first
+    from train_evaluate import main as train_main
     if uploaded is not None:
-        os.makedirs("data", exist_ok=True)
         with open(DATA_PATH, "wb") as f:
             f.write(uploaded.getvalue())
         st.success("Uploaded custom intents.json saved. Training on new data.")
-    with st.spinner("Training model..."):
-        train_main(DATA_PATH, MODEL_DIR, "reports")
-    st.success("Training complete.")
+    train_main(DATA_PATH, MODEL_DIR, "reports")
+    st.success("Training complete. Refresh the page if model does not update.")
+    st.stop()
 
-# Try to load model after potential training
+# ---------- Load model or ask to train ----------
 try:
     model, vectorizer, label_to_responses = load_artifacts()
 except Exception:
-    st.error("Model artifacts not found. Click 'Train / Retrain Model' in the sidebar to build the model.")
+    st.error("Model artifacts not found. Click **'Train / Retrain Model'** in the sidebar to build the model.")
     st.stop()
 
-# Build retrieval pattern list for fallback matching
+# ---------- Patterns for retrieval fallback ----------
 with open(DATA_PATH, "r", encoding="utf-8") as f:
     data = json.load(f)
 patterns, pattern_to_label = [], {}
@@ -88,22 +92,36 @@ for it in data["intents"]:
         patterns.append(p)
         pattern_to_label[p] = tag
 
+def retrieval_fallback(vectorizer, patterns, text, pattern_to_label, min_sim=0.22):
+    try:
+        X = vectorizer.transform([text])
+        P = vectorizer.transform(patterns)
+        sims = cosine_similarity(X, P)[0]
+        idx = sims.argmax()
+        if sims[idx] >= min_sim:
+            return pattern_to_label[patterns[idx]], float(sims[idx])
+    except Exception:
+        pass
+    return "fallback", 0.0
+
+# ---------- Chat history ----------
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "assistant", "content": "Hi! I'm UniHelp bot. Ask me about admissions, fees, scholarships, courses, or campus info."}
+        {"role": "assistant", "content": "Hi! Ask me about admissions, tuition, scholarships, courses, or library hours."}
     ]
 
 for m in st.session_state.messages:
     with st.chat_message(m["role"]):
-        st.markdown(m["content"])
+        klass = "bot" if m["role"]=="assistant" else "user"
+        st.markdown(f"<div class='chat-bubble {klass}'>{m['content']}</div>", unsafe_allow_html=True)
 
+# ---------- Input ----------
 user_input = st.chat_input("Type your message...")
 if user_input:
-    st.session_state.messages.append({"role": "user", "content": user_input})
+    st.session_state.messages.append({"role":"user","content":user_input})
     with st.chat_message("user"):
-        st.markdown(user_input)
+        st.markdown(f"<div class='chat-bubble user'>{user_input}</div>", unsafe_allow_html=True)
 
-    # Predict
     intent, score = predict_intent(model, user_input)
     if score < threshold:
         intent, score = retrieval_fallback(vectorizer, patterns, user_input, pattern_to_label)
@@ -111,20 +129,19 @@ if user_input:
     bot_text = get_response(intent, label_to_responses)
 
     with st.chat_message("assistant"):
-        st.markdown(bot_text)
-        cols = st.columns(2)
-        with cols[0]:
-            if st.button("👍", key=f"up_{len(st.session_state.messages)}"):
-                log_interaction(user_input, bot_text, intent, score, feedback="up")
-                st.toast("Thanks for the feedback!")
-        with cols[1]:
-            if st.button("👎", key=f"down_{len(st.session_state.messages)}"):
-                log_interaction(user_input, bot_text, intent, score, feedback="down")
-                st.toast("Feedback recorded.")
+        st.markdown(f"<div class='chat-bubble bot'>{bot_text}</div>", unsafe_allow_html=True)
+        c1, c2 = st.columns(2)
+        if c1.button("👍 Helpful", key=f"up_{len(st.session_state.messages)}"):
+            log_interaction(user_input, bot_text, intent, score, "up")
+            st.toast("Thanks for the feedback!")
+        if c2.button("👎 Not helpful", key=f"down_{len(st.session_state.messages)}"):
+            log_interaction(user_input, bot_text, intent, score, "down")
+            st.toast("Feedback recorded.")
 
-    st.session_state.messages.append({"role": "assistant", "content": bot_text})
+    st.session_state.messages.append({"role":"assistant","content":bot_text})
     log_interaction(user_input, bot_text, intent, score)
 
+# ---------- Evaluation panel ----------
 st.divider()
 st.subheader("📊 Evaluation (from last training)")
 eval_path = os.path.join("reports", "eval.txt")
@@ -133,10 +150,3 @@ if os.path.exists(eval_path):
         st.text(f.read())
 else:
     st.info("No evaluation report yet. Use **Train / Retrain Model** in the sidebar.")
-
-st.divider()
-st.subheader("🧪 Export chat logs")
-ensure_logs()
-if os.path.exists(LOG_PATH):
-    with open(LOG_PATH, "rb") as f:
-        st.download_button(label="Download chat_logs.csv", data=f, file_name="chat_logs.csv", mime="text/csv")
