@@ -2,73 +2,113 @@
   "intents": [
     {
       "tag": "greeting",
-      "patterns": [
-        "hi",
-        "hello",
-        "hey",
-        "good morning",
-        "good afternoon"
-      ],
-      "responses": [
-        "Hello! How can I help you today?",
-        "Hi there! What would you like to know?"
-      ]
+      "patterns": ["hi", "hello", "hey", "good morning", "good afternoon", "is anyone there?"],
+      "responses": ["Hello! 👋 I’m UniHelp, your virtual assistant. How can I support you today?"]
     },
     {
       "tag": "goodbye",
-      "patterns": [
-        "bye",
-        "goodbye",
-        "see you",
-        "catch you later"
-      ],
-      "responses": [
-        "Goodbye!",
-        "See you next time!"
-      ]
+      "patterns": ["bye", "goodbye", "see you later", "talk to you soon"],
+      "responses": ["Goodbye! 👋 Have a great day.", "See you later — good luck with your studies!"]
     },
     {
-      "tag": "admissions",
-      "patterns": [
-        "admission requirements",
-        "how to apply",
-        "entry requirement"
-      ],
-      "responses": [
-        "You can apply via the admissions portal and upload required documents.",
-        "Minimum GPA and English proficiency are required."
-      ]
+      "tag": "thanks",
+      "patterns": ["thanks", "thank you", "thx", "appreciate it"],
+      "responses": ["You’re most welcome!", "Glad I could help!"]
     },
     {
-      "tag": "fees",
-      "patterns": [
-        "tuition fees",
-        "how much is the fee",
-        "payment methods"
-      ],
-      "responses": [
-        "Tuition differs by program—see the fees page.",
-        "You can pay online via the student portal."
-      ]
+      "tag": "admission_requirements",
+      "patterns": ["what are the admission requirements?", "how can I apply?", "entry requirements", "eligibility for admission"],
+      "responses": ["To apply, you’ll need: \n• Completed application form \n• Official transcripts \n• Minimum GPA 2.5 (undergrad) / 3.0 (postgrad) \n• English proficiency (IELTS/TOEFL)"]
     },
     {
-      "tag": "library",
-      "patterns": [
-        "library hours",
-        "library open",
-        "library time"
-      ],
-      "responses": [
-        "Library is open Mon–Fri 8am–8pm, Sat–Sun 10am–5pm."
-      ]
+      "tag": "application_deadlines",
+      "patterns": ["when is the application deadline?", "last date to apply", "closing date for applications"],
+      "responses": ["Upcoming deadlines: \n• Fall intake: July 30 \n• Spring intake: December 15 \n• International students: apply 1 month earlier."]
+    },
+    {
+      "tag": "programs_offered",
+      "patterns": ["what programs are offered?", "available courses", "majors list", "degree programs"],
+      "responses": ["We offer programs in: \n- Engineering (Civil, Mechanical, Electrical, Computer) \n- Business & Management \n- Computer Science & IT \n- Law & Humanities \n- Medicine & Health Sciences."]
+    },
+    {
+      "tag": "course_advice",
+      "patterns": ["which courses should I take for AI?", "recommend subjects for data science", "best classes for web development"],
+      "responses": ["For AI/Data Science: Python, Machine Learning, Statistics, Data Mining. \nFor Web: Web Programming, Software Engineering, Cloud Computing. \nFor Cybersecurity: Networks, Operating Systems, Applied Cryptography."]
+    },
+    {
+      "tag": "tuition_fees",
+      "patterns": ["how much is tuition?", "tuition fees", "fees per semester", "cost of study"],
+      "responses": ["Tuition fees (approx per semester): \n• Local students: $2,500–$3,200 \n• International students: $3,800–$4,800 \nVaries by faculty and program."]
+    },
+    {
+      "tag": "scholarships",
+      "patterns": ["scholarships available?", "financial aid options", "any bursaries?", "grants for students"],
+      "responses": ["Yes! 🎓 We offer: \n• Merit-based scholarships (up to 50% tuition) \n• Need-based aid \n• Sports & Talent scholarships. \nApply via the Scholarships Office."]
+    },
+    {
+      "tag": "library_hours",
+      "patterns": ["when is the library open?", "library hours", "library timings"],
+      "responses": ["Library hours: \n• Mon–Fri: 8am–9pm \n• Sat: 9am–5pm \n• Sun: Closed. \nExtended hours during exam weeks."]
+    },
+    {
+      "tag": "campus_location",
+      "patterns": ["where is the university located?", "campus address", "how to get to campus"],
+      "responses": ["Main Campus: 123 University Avenue, City. \nBy bus: take line 15 or 27. \nNearest train station: Central Station."]
+    },
+    {
+      "tag": "transport",
+      "patterns": ["bus to campus", "how to reach campus", "shuttle timings"],
+      "responses": ["Campus Shuttle: every 20 mins from Central Station (7am–10pm). \nNearest public bus stop: University Gate."]
+    },
+    {
+      "tag": "hostel_booking",
+      "patterns": ["how to book hostel?", "accommodation on campus", "dorm rooms"],
+      "responses": ["To book a hostel: \n1) Login to Student Portal \n2) Go to Accommodation → Apply \n3) Submit documents + deposit. \nRooms allocated on first-come basis."]
+    },
+    {
+      "tag": "contact_info",
+      "patterns": ["contact number", "email for admissions", "how to contact the university?"],
+      "responses": ["📞 Admissions Office: +1-234-567-890 \n📧 Email: admissions@uni.edu \n📍 Office: Building A, Room 101"]
+    },
+    {
+      "tag": "reset_password",
+      "patterns": ["i forgot my password", "how to reset portal password", "reset login"],
+      "responses": ["Reset your Student Portal password by: \n1) Visit portal.uni.edu \n2) Click 'Forgot Password' \n3) Enter student email \n4) Follow reset link sent to your inbox."]
+    },
+    {
+      "tag": "events",
+      "patterns": ["what events are happening?", "upcoming events", "campus activities"],
+      "responses": ["Upcoming Events: \n• Career Fair – Sept 15 \n• International Student Day – Oct 5 \n• Hackathon – Nov 20"]
+    },
+    {
+      "tag": "exam_schedule",
+      "patterns": ["when are the exams?", "exam timetable", "exam schedule"],
+      "responses": ["Exam schedules are posted in the Student Portal under Academics → Exam Timetable. \nMidterms: October. Finals: December."]
+    },
+    {
+      "tag": "sports_facilities",
+      "patterns": ["sports center", "gym timings", "can I play basketball"],
+      "responses": ["Sports Complex: open 7am–10pm daily. Facilities include gym, swimming pool, basketball & football courts."]
+    },
+    {
+      "tag": "cafeteria",
+      "patterns": ["is the cafeteria open?", "canteen hours", "food on campus"],
+      "responses": ["Cafeteria hours: Mon–Sat 7am–8pm. 🍴 Options: halal, vegetarian, vegan, gluten-free."]
+    },
+    {
+      "tag": "technical_support",
+      "patterns": ["wifi not working", "portal error", "can't login"],
+      "responses": ["For IT issues: \n• Reset WiFi at login.uni.edu \n• Clear browser cache \n• If problem persists, email it-support@uni.edu."]
+    },
+    {
+      "tag": "emergency",
+      "patterns": ["emergency number", "who to call in emergency", "security contact"],
+      "responses": ["🚨 University Security: +1-999-222-333 (24/7 hotline). \nHealth Center: Building B, Ground Floor."]
     },
     {
       "tag": "fallback",
       "patterns": [],
-      "responses": [
-        "I'm not sure yet—could you rephrase?",
-        "Sorry, I didn't catch that. Try asking about admissions, fees, or library hours."
-      ]
+      "responses": ["Sorry, I’m not sure I understand that. 🤔 Try asking about admissions, fees, programs, or library."]
     }
   ]
 }
