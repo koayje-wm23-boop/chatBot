@@ -7,17 +7,11 @@
         "hello",
         "hey",
         "good morning",
-        "good afternoon",
-        "good evening",
-        "yo",
-        "hi there",
-        "hello there",
-        "hey there"
+        "good afternoon"
       ],
       "responses": [
-        "Hi! I'm UniHelp bot. How can I assist you today?",
-        "Hello! Need info on admissions, fees, courses, or campus services?",
-        "Hey! Ask me about requirements, schedules, or anything campus-related."
+        "Hello! How can I help you today?",
+        "Hi there! What would you like to know?"
       ]
     },
     {
@@ -26,170 +20,54 @@
         "bye",
         "goodbye",
         "see you",
-        "talk later",
-        "see ya",
         "catch you later"
       ],
       "responses": [
-        "Goodbye! \ud83d\udc4b",
-        "See you next time!",
-        "Take care and have a great day!"
+        "Goodbye!",
+        "See you next time!"
       ]
     },
     {
-      "tag": "thanks",
+      "tag": "admissions",
       "patterns": [
-        "thanks",
-        "thank you",
-        "thx",
-        "appreciate it",
-        "great, thanks"
-      ],
-      "responses": [
-        "You're welcome!",
-        "Happy to help!",
-        "Anytime!"
-      ]
-    },
-    {
-      "tag": "admission_requirements",
-      "patterns": [
-        "what are the admission requirements",
-        "requirements for admission",
-        "entry requirements",
+        "admission requirements",
         "how to apply",
-        "application requirements",
-        "minimum gpa to apply"
+        "entry requirement"
       ],
       "responses": [
-        "General entry: completed secondary education, minimum GPA 2.5, English proficiency (IELTS 6.0 or equivalent). Submit online application with transcripts and ID.",
-        "Typical requirements: high school completion, GPA \u2265 2.5, and proof of English (IELTS 6.0 / TOEFL 70). Apply online and upload documents.",
-        "You'll need high school results, minimum GPA 2.5, English proof, and to complete the online application with your documents."
+        "You can apply via the admissions portal and upload required documents.",
+        "Minimum GPA and English proficiency are required."
       ]
     },
     {
-      "tag": "tuition_fees",
+      "tag": "fees",
       "patterns": [
-        "how much is the tuition",
         "tuition fees",
-        "fees per semester",
-        "cost for international student",
-        "what is the fee structure"
+        "how much is the fee",
+        "payment methods"
       ],
       "responses": [
-        "Undergrad tuition is typically $2,500\u2013$3,200 per semester for locals and $3,800\u2013$4,800 for international students. Lab courses may add fees.",
-        "Most programs cost about $2.5k\u2013$3.2k/semester (local) or $3.8k\u2013$4.8k (international). Some programs include additional lab or studio fees.",
-        "Fees vary by program: locals ~$2.5k\u2013$3.2k/semester, international ~$3.8k\u2013$4.8k/semester."
+        "Tuition differs by program—see the fees page.",
+        "You can pay online via the student portal."
       ]
     },
     {
-      "tag": "scholarships",
+      "tag": "library",
       "patterns": [
-        "scholarships available",
-        "financial aid",
-        "any bursary",
-        "how to get scholarship",
-        "scholarship requirements"
+        "library hours",
+        "library open",
+        "library time"
       ],
       "responses": [
-        "Merit, need-based, and sports scholarships are available. Typical requirement: GPA \u2265 3.2 plus a short statement. Apply via the Funding Portal.",
-        "Yes\u2014merit & need-based awards exist. Check the Funding Portal; most ask for GPA \u22653.2 and a short essay.",
-        "We offer multiple scholarships. Take a look at the Funding Portal and submit your docs before the deadline."
-      ]
-    },
-    {
-      "tag": "course_advice",
-      "patterns": [
-        "which course should I take",
-        "help me choose a course",
-        "recommendation for electives",
-        "course selection advice",
-        "what electives are good for ai"
-      ],
-      "responses": [
-        "For AI interest: take Linear Algebra, Probability, Data Structures, Intro to ML, and a Python programming elective.",
-        "If you're into data: pick Database Systems, Statistics, Data Mining, and a project-based elective.",
-        "For web dev: consider Web Programming, Databases, Cloud Basics, and Software Engineering."
-      ]
-    },
-    {
-      "tag": "library_hours",
-      "patterns": [
-        "library opening hours",
-        "when is the library open",
-        "library schedule",
-        "library close time"
-      ],
-      "responses": [
-        "Library hours: Mon\u2013Fri 8am\u20139pm, Sat 9am\u20135pm, Sun closed (exam weeks extend to 11pm).",
-        "Mon\u2013Fri 08:00\u201321:00, Sat 09:00\u201317:00, closed Sunday (extended during exams).",
-        "Typically 8am\u20139pm weekdays, 9am\u20135pm Saturday, closed Sunday."
-      ]
-    },
-    {
-      "tag": "campus_location",
-      "patterns": [
-        "where is the campus",
-        "campus address",
-        "location of university",
-        "how to get to campus"
-      ],
-      "responses": [
-        "Main campus: 1 University Way. Nearest transit: LRT Station Central, Bus 18/33. Parking P1 & P2 at south gate.",
-        "Address: 1 University Way. Public transport: LRT Central + buses 18/33. Parking at P1/P2.",
-        "We're at 1 University Way\u2014easy via LRT Central and bus lines 18/33."
-      ]
-    },
-    {
-      "tag": "contact_info",
-      "patterns": [
-        "how to contact admissions",
-        "phone number for university",
-        "email address",
-        "who can i talk to"
-      ],
-      "responses": [
-        "Admissions: admissions@uni.edu, +60-12-345-6789. Helpdesk: help@uni.edu.",
-        "Reach admissions at admissions@uni.edu or +60-12-345-6789.",
-        "General help: help@uni.edu. Admissions hotline: +60-12-345-6789."
-      ]
-    },
-    {
-      "tag": "hostel_booking",
-      "patterns": [
-        "how to book hostel",
-        "hostel application",
-        "dorm booking",
-        "accommodation request",
-        "student housing availability"
-      ],
-      "responses": [
-        "Apply via the Housing Portal with your student ID. Rooms are first-come-first-served; singles and doubles available.",
-        "Use the Housing Portal to book your dorm. Have your student ID ready.",
-        "Housing is limited\u2014apply on the portal early for best chance."
-      ]
-    },
-    {
-      "tag": "reset_password",
-      "patterns": [
-        "i forgot my student portal password",
-        "reset password",
-        "can't login to portal",
-        "portal login issue"
-      ],
-      "responses": [
-        "Go to Student Portal \u2192 'Forgot Password'. You'll receive a reset link at your registered email.",
-        "Use 'Forgot Password' on the portal\u2014check your email for the reset link.",
-        "Click 'Forgot Password' on the login page to reset your credentials."
+        "Library is open Mon–Fri 8am–8pm, Sat–Sun 10am–5pm."
       ]
     },
     {
       "tag": "fallback",
       "patterns": [],
       "responses": [
-        "I'm not fully sure. Could you rephrase? You can ask about admissions, fees, scholarships, courses, library hours, housing, or contacts.",
-        "Sorry, I didn't catch that. Try asking about requirements, tuition, or campus info.",
-        "I'm still learning\u2014please try another question or add more details."
+        "I'm not sure yet—could you rephrase?",
+        "Sorry, I didn't catch that. Try asking about admissions, fees, or library hours."
       ]
     }
   ]
