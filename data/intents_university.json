@@ -2,154 +2,155 @@
   "intents": [
     {
       "tag": "greeting",
-      "patterns": ["hi", "hello", "hey", "good morning", "good afternoon", "is anyone there?", "yo"],
+      "patterns": ["hi", "hello", "hey", "good morning", "good afternoon", "is anyone there?"],
       "responses": ["Hello! 👋 I’m UniHelp. How can I support you today?"]
     },
     {
       "tag": "goodbye",
-      "patterns": ["bye", "goodbye", "see you later", "talk to you soon", "ciao"],
+      "patterns": ["bye", "goodbye", "see you later", "talk to you soon"],
       "responses": ["Goodbye! 👋 Have a great day.", "See you later — good luck with your studies!"]
     },
     {
       "tag": "thanks",
-      "patterns": ["thanks", "thank you", "thx", "appreciate it", "many thanks"],
+      "patterns": ["thanks", "thank you", "thx", "appreciate it"],
       "responses": ["You’re most welcome!", "Glad I could help!"]
     },
 
     {
       "tag": "admission_requirements",
-      "patterns": ["what are the admission requirements?", "how can I apply?", "entry requirements", "eligibility for admission", "do i qualify to apply", "undergraduate entry"],
-      "responses": ["To apply, you’ll need:\n• Completed application form\n• Official transcripts\n• Minimum GPA 2.5 (UG) / 3.0 (PG)\n• English proficiency (IELTS/TOEFL)"]
+      "patterns": ["what are the admission requirements", "how can i apply", "entry requirements", "eligibility for admission", "do i qualify to apply"],
+      "responses": ["To apply, you’ll need: completed application form, official transcripts, minimum GPA 2.5 (UG) / 3.0 (PG), and English proficiency (IELTS/TOEFL)."]
     },
     {
       "tag": "application_deadlines",
-      "patterns": ["when is the application deadline?", "last date to apply", "closing date for applications", "deadline for fall intake", "application due date"],
-      "responses": ["Deadlines:\n• Fall intake: July 30\n• Spring intake: Dec 15\n• International students: apply 1 month earlier."]
+      "patterns": ["when is the application deadline", "last date to apply", "closing date for applications", "deadline for fall intake"],
+      "responses": ["Deadlines: Fall intake July 30 • Spring intake Dec 15 • International students apply 1 month earlier."]
     },
+
     {
       "tag": "programs_offered",
-      "patterns": ["what programs are offered?", "available courses", "majors list", "degree programs", "faculties available"],
-      "responses": ["Programs include:\n- Engineering (Civil/Mechanical/Electrical/Computer)\n- Business & Management\n- Computer Science & IT\n- Law & Humanities\n- Medicine & Health Sciences."]
+      "patterns": ["what programs are offered", "available programs", "available courses", "majors list", "degree programs", "what courses do you have"],
+      "responses": ["Programs include Engineering, Business, Computer Science/IT, Law & Humanities, Medicine & Health Sciences."]
     },
     {
       "tag": "course_advice",
-      "patterns": ["which courses should I take for AI?", "recommend subjects for data science", "best classes for web development", "what should i study for cybersecurity", "electives suggestion"],
-      "responses": ["Recommendations:\n• AI/Data: Python, ML, Statistics, Data Mining\n• Web: Web Programming, Software Engineering, Cloud\n• Cyber: Networks, OS, Cryptography"]
+      "patterns": ["which courses should i take for ai", "recommend subjects for data science", "best classes for web development", "what should i study for cybersecurity", "electives suggestion"],
+      "responses": ["AI/Data: Python, ML, Statistics, Data Mining • Web: Web Programming, Software Engineering, Cloud • Cyber: Networks, OS, Cryptography."]
     },
 
     {
       "tag": "tuition_fees",
-      "patterns": ["how much is tuition?", "tuition fees", "fees per semester", "cost of study", "how much do i pay"],
-      "responses": ["Per semester (approx):\n• Local: $2,500–$3,200\n• International: $3,800–$4,800\nVaries by faculty and credits."]
+      "patterns": ["how much is tuition", "tuition fees", "fees per semester", "cost of study", "how much do i pay"],
+      "responses": ["Per semester (approx): Local $2,500–$3,200 • International $3,800–$4,800 — varies by faculty and credits."]
     },
     {
       "tag": "payment_methods",
       "patterns": ["how do i pay fees", "payment options", "can i pay online", "installments for tuition"],
-      "responses": ["Payment options: online banking/credit card, counter service, or FPX.\nInstallment plans available for selected programs—see Finance Office."]
+      "responses": ["Payment options: online banking/credit card, counter service, FPX. Installments available for selected programs via Finance Office."]
     },
 
     {
       "tag": "scholarships",
-      "patterns": ["scholarship", "scholarships", "scholarships available?", "any bursary", "financial aid", "how to get scholarship", "am i eligible for scholarship", "scholarship requirements", "apply for scholarship"],
-      "responses": ["Yes! We offer merit, need-based, and sports scholarships. Typical requirement: GPA ≥ 3.2 plus a short statement. Apply via the Funding Portal."]
+      "patterns": ["scholarship", "scholarships", "scholarships available", "any bursary", "financial aid", "how to get scholarship", "am i eligible for scholarship", "scholarship requirements", "apply for scholarship"],
+      "responses": ["Yes! We offer merit, need-based, and sports scholarships. Typical requirement: GPA ≥3.2 plus a short statement. Apply via the Funding Portal."]
     },
     {
       "tag": "scholarship_deadlines",
       "patterns": ["scholarship deadline", "when to apply for scholarship", "scholarship closing date"],
-      "responses": ["Scholarship windows:\n• Main round: June 1–July 15\n• Second round: Dec 1–Dec 20\nSubmit early for best chance."]
+      "responses": ["Scholarship windows: Main round Jun 1–Jul 15 • Second round Dec 1–Dec 20. Submit early for best chance."]
     },
 
     {
       "tag": "library_hours",
-      "patterns": ["when is the library open?", "library hours", "library timings", "what time does the library close"],
-      "responses": ["Library:\n• Mon–Fri: 8am–9pm\n• Sat: 9am–5pm\n• Sun: Closed\n(Exam weeks extended to 11pm)"]
+      "patterns": ["when is the library open", "library hours", "library timings", "what time does the library close"],
+      "responses": ["Library: Mon–Fri 8am–9pm • Sat 9am–5pm • Sun closed (extended to 11pm during exams)."]
     },
     {
       "tag": "library_services",
       "patterns": ["can i borrow books", "library membership", "how many books can i borrow", "library fines"],
-      "responses": ["Students can borrow up to 6 books for 2 weeks.\nLate fee: $0.20/day.\nE-resources available via the Library Portal."]
+      "responses": ["Borrow up to 6 books for 2 weeks • Late fee $0.20/day • E-resources via the Library Portal."]
     },
 
     {
       "tag": "campus_location",
       "patterns": ["where is the university located", "campus address", "how to get to campus", "map of campus"],
-      "responses": ["Main Campus: 123 University Avenue.\nBus lines: 15, 27.\nNearest train: Central Station.\nCampus map is available in the Student Portal."]
+      "responses": ["Main Campus: 123 University Avenue • Buses 15 & 27 • Nearest train: Central Station • Campus map in Student Portal."]
     },
     {
       "tag": "transport",
       "patterns": ["bus to campus", "how to reach campus", "shuttle timings", "is there a campus bus", "public transport"],
-      "responses": ["Shuttle runs every 20 minutes 7:00–22:00 from Central Station.\nPublic buses stop at University Gate."]
+      "responses": ["Shuttle every 20 minutes (7:00–22:00) from Central Station • Public buses stop at University Gate."]
     },
 
     {
       "tag": "hostel_booking",
       "patterns": ["how to book hostel", "accommodation on campus", "dorm rooms", "hostel application"],
-      "responses": ["Book accommodation via Student Portal → Housing.\nSingles and doubles available. Allocation is first-come-first-served."]
+      "responses": ["Book via Student Portal → Housing. Singles and doubles available. Allocation is first-come, first-served."]
     },
     {
       "tag": "hostel_rules",
       "patterns": ["hostel rules", "curfew in hostel", "guest policy hostel"],
-      "responses": ["Hostel rules: quiet hours 10pm–7am, guests until 9pm, no smoking or alcohol. See Housing Handbook for details."]
+      "responses": ["Hostel rules: quiet hours 10pm–7am, guests until 9pm, no smoking/alcohol. See Housing Handbook for full policy."]
     },
 
     {
       "tag": "contact_info",
       "patterns": ["contact number", "email for admissions", "how to contact the university", "who can i talk to"],
-      "responses": ["Admissions: admissions@uni.edu, +60-12-345-6789.\nGeneral help: help@uni.edu.\nOffice: Building A, Room 101."]
+      "responses": ["Admissions: admissions@uni.edu, +60-12-345-6789 • General help: help@uni.edu • Office: Building A, Room 101."]
     },
 
     {
       "tag": "reset_password",
       "patterns": ["i forgot my password", "how to reset portal password", "reset login", "can't login to portal"],
-      "responses": ["Reset steps:\n1) Visit portal.uni.edu → Forgot Password\n2) Enter your student email\n3) Click the reset link\n4) If no email, contact help@uni.edu"]
+      "responses": ["Reset: portal.uni.edu → Forgot Password → enter student email → click the reset link • If no email, contact help@uni.edu."]
     },
     {
       "tag": "technical_support",
       "patterns": ["wifi not working", "portal error", "can't login", "moodle problem", "email not syncing"],
-      "responses": ["Try: reset WiFi profile, clear browser cache, or use another browser.\nIf it persists, email it-support@uni.edu."]
+      "responses": ["Try: reset Wi-Fi profile, clear browser cache, or another browser. If it persists, email it-support@uni.edu."]
     },
 
     {
       "tag": "events",
       "patterns": ["what events are happening", "upcoming events", "campus activities", "club fair"],
-      "responses": ["Upcoming:\n• Career Fair – Sept 15\n• International Student Day – Oct 5\n• Hackathon – Nov 20"]
+      "responses": ["Upcoming: Career Fair (Sept 15) • International Student Day (Oct 5) • Hackathon (Nov 20)."]
     },
     {
       "tag": "exam_schedule",
       "patterns": ["when are the exams", "exam timetable", "exam schedule", "finals week"],
-      "responses": ["Exam timetables are in Student Portal → Academics → Exam Timetable.\nMidterms: October. Finals: December."]
+      "responses": ["Exam timetables: Student Portal → Academics → Exam Timetable • Midterms Oct • Finals Dec."]
     },
     {
       "tag": "sports_facilities",
       "patterns": ["sports center", "gym timings", "basketball court", "swimming pool hours"],
-      "responses": ["Sports Complex: 7am–10pm daily.\nFacilities: gym, pool, basketball, football."]
+      "responses": ["Sports Complex: 7am–10pm daily • Facilities: gym, pool, basketball, football."]
     },
     {
       "tag": "cafeteria",
       "patterns": ["is the cafeteria open", "canteen hours", "food on campus", "halal food"],
-      "responses": ["Cafeteria: Mon–Sat 7am–8pm.\nOptions include halal, vegetarian, vegan, gluten-free."]
+      "responses": ["Cafeteria: Mon–Sat 7am–8pm • Options: halal, vegetarian, vegan, gluten-free."]
     },
     {
       "tag": "emergency",
       "patterns": ["emergency number", "who to call in emergency", "security contact", "medical help"],
-      "responses": ["Security (24/7): +1-999-222-333.\nHealth Center: Building B, Ground Floor."]
+      "responses": ["Security (24/7): +1-999-222-333 • Health Center: Building B, Ground Floor."]
     },
 
     {
       "tag": "fees_refund",
       "patterns": ["refund policy", "can i get a refund", "withdrawal and refund"],
-      "responses": ["Refunds depend on withdrawal date.\n100% within first week, 50% in week 2, no refund after week 3.\nCheck Finance policy for details."]
+      "responses": ["Refunds depend on withdrawal date: 100% week 1 • 50% week 2 • No refund after week 3 • See Finance policy."]
     },
     {
       "tag": "id_card",
       "patterns": ["lost student id", "replace id card", "how to get new student card"],
-      "responses": ["Report loss to Security, then visit Student Services with proof of identity.\nReplacement fee: $10."]
+      "responses": ["Report loss to Security, then visit Student Services with ID • Replacement fee: $10."]
     },
 
     {
       "tag": "fallback",
       "patterns": [],
-      "responses": ["I’m still learning—please try another question or add more details.", "I’m not fully sure. Could you rephrase? You can ask about admissions, fees, scholarships, courses, library hours, housing, or contacts."]
+      "responses": ["Sorry, I didn't catch that. Try asking about requirements, tuition, scholarships, programs, library, housing, or contacts."]
     }
   ]
 }
