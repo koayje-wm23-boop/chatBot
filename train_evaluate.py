@@ -1,4 +1,3 @@
-# train_evaluate.py — TF-IDF + Logistic Regression with BLEU & ROUGE-L
 import json, os, argparse
 from typing import Dict, List, Tuple
 import numpy as np
@@ -34,25 +33,21 @@ def main(data_path="data/intents_university.json", model_dir="models", reports_d
     X, y = build_xy(data)
     label_to_responses = {i["tag"]: i["responses"] for i in data["intents"] if i.get("responses")}
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=test_size, random_state=seed, stratify=y
-    )
-
+    Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=test_size, random_state=seed, stratify=y)
     pipe = Pipeline([
         ("tfidf", TfidfVectorizer(lowercase=True, stop_words="english", ngram_range=(1,2))),
         ("clf", LogisticRegression(max_iter=1000))
     ])
-    pipe.fit(X_train, y_train)
+    pipe.fit(Xtr, ytr)
+    ypred = pipe.predict(Xte)
 
-    y_pred = pipe.predict(X_test)
-
-    report = classification_report(y_test, y_pred, digits=3)
-    pr, rc, f1, _ = precision_recall_fscore_support(y_test, y_pred, average="weighted", zero_division=0)
+    report = classification_report(yte, ypred, digits=3)
+    pr, rc, f1, _ = precision_recall_fscore_support(yte, ypred, average="weighted", zero_division=0)
 
     smoothie = SmoothingFunction().method1
     rouge = rouge_scorer.RougeScorer(['rougeL'], use_stemmer=True)
     bleu_scores, rougeL_scores = [], []
-    for yt, yp in zip(y_test, y_pred):
+    for yt, yp in zip(yte, ypred):
         ref = (label_to_responses.get(yt, [""]))[0].split()
         hyp = (label_to_responses.get(yp, [""]))[0].split()
         bleu_scores.append(sentence_bleu([ref], hyp, smoothing_function=smoothie))
@@ -71,8 +66,6 @@ def main(data_path="data/intents_university.json", model_dir="models", reports_d
         f.write(f"BLEU: {bleu:.3f} | ROUGE-L: {rougeL:.3f}\n")
 
     print("Training complete.")
-    print(f"Saved model to: {model_dir}")
-    print(f"Eval report written to: {os.path.join(reports_dir, 'eval.txt')}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
