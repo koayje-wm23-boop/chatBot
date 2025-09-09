@@ -114,7 +114,7 @@ def deterministic_response(intent: str) -> str:
 def new_chat():
     st.session_state.chat_id = str(uuid.uuid4())[:8]
     st.session_state.messages = [
-        {"role":"assistant","content":"Hi! Ask about admissions, programs, tuition, scholarships, library, housing, or contacts."}
+        {"role":"assistant","content":"Hi! Ask about entry requirements, fees, scholarships, programs, library, hostel, or contacts."}
     ]
 if "chat_id" not in st.session_state:
     new_chat()
