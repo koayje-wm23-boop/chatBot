@@ -1,5 +1,5 @@
-# train_evaluate.py
-import json, os, argparse, random
+# train_evaluate.py — TF-IDF + Logistic Regression with BLEU & ROUGE-L
+import json, os, argparse
 from typing import Dict, List, Tuple
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -9,7 +9,6 @@ from sklearn.pipeline import Pipeline
 from sklearn.metrics import classification_report, precision_recall_fscore_support
 import joblib
 
-# BLEU & ROUGE
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 from rouge_score import rouge_scorer
 
@@ -26,7 +25,8 @@ def build_xy(intents: Dict) -> Tuple[List[str], List[str]]:
             y.append(tag)
     return X, y
 
-def main(data_path="data/intents_university.json", model_dir="models", reports_dir="reports", test_size=0.25, seed=42):
+def main(data_path="data/intents_university.json", model_dir="models", reports_dir="reports",
+         test_size=0.25, seed=42):
     os.makedirs(model_dir, exist_ok=True)
     os.makedirs(reports_dir, exist_ok=True)
 
@@ -46,26 +46,20 @@ def main(data_path="data/intents_university.json", model_dir="models", reports_d
 
     y_pred = pipe.predict(X_test)
 
-    # Intent classification metrics
     report = classification_report(y_test, y_pred, digits=3)
     pr, rc, f1, _ = precision_recall_fscore_support(y_test, y_pred, average="weighted", zero_division=0)
 
-    # Response generation metrics (templated baseline)
-    # reference = first response of the TRUE intent, hypothesis = first response of PRED intent
     smoothie = SmoothingFunction().method1
     rouge = rouge_scorer.RougeScorer(['rougeL'], use_stemmer=True)
-
     bleu_scores, rougeL_scores = [], []
     for yt, yp in zip(y_test, y_pred):
         ref = (label_to_responses.get(yt, [""]))[0].split()
         hyp = (label_to_responses.get(yp, [""]))[0].split()
         bleu_scores.append(sentence_bleu([ref], hyp, smoothing_function=smoothie))
         rougeL_scores.append(rouge.score(" ".join(ref), " ".join(hyp))["rougeL"].fmeasure)
-
     bleu = float(np.mean(bleu_scores)) if bleu_scores else 0.0
     rougeL = float(np.mean(rougeL_scores)) if rougeL_scores else 0.0
 
-    # Save artifacts
     joblib.dump(pipe, os.path.join(model_dir, "intent_model.joblib"))
     joblib.dump(label_to_responses, os.path.join(model_dir, "label_to_responses.joblib"))
 
