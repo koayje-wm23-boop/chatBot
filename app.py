@@ -1,4 +1,4 @@
-# app.py — Final cleaned-up version with sidebar chat history & rating
+# app.py — Final with auto-train, chat history, ratings, debug, stronger fallback
 import streamlit as st
 import os, json, random, re, datetime, uuid
 import joblib
@@ -33,14 +33,13 @@ def log_row(chat_id, user, bot, intent, score, feedback=None):
     }]).to_csv(LOG_PATH, mode="a", header=False, index=False)
 
 def save_chat_to_disk(session):
-    """Persist the current chat session to logs/chats/<id>.json after each message/rating."""
     payload = {
         "id": session["id"],
         "title": session["title"],
         "created_at": session["created_at"],
         "updated_at": datetime.datetime.now().isoformat(timespec="seconds"),
         "rating": session.get("rating"),
-        "messages": session["messages"],  # [{role, content}]
+        "messages": session["messages"],
     }
     path = os.path.join(CHAT_DIR, f"{session['id']}.json")
     with open(path, "w", encoding="utf-8") as f:
@@ -56,7 +55,6 @@ def list_saved_chats():
                 chats.append({"id": data["id"], "title": data.get("title","(untitled)"), "updated_at": data.get("updated_at","")})
             except Exception:
                 pass
-    # newest first
     chats.sort(key=lambda x: x.get("updated_at",""), reverse=True)
     return chats
 
@@ -95,7 +93,6 @@ def train_now(data_path=DATA_PATH):
     st.cache_resource.clear()
     st.success("Training complete.")
 
-# --------------------- Load Data & Model ---------------------
 # Auto-train if missing
 if not artifacts_exist():
     train_now(DATA_PATH)
@@ -119,7 +116,8 @@ def predict_intent(text):
     j = probs.argmax()
     return labels[j], float(probs[j])
 
-def retrieval_fallback(text, min_sim=0.22):
+# **Lowered similarity threshold** so single-word like "scholarship" maps correctly
+def retrieval_fallback(text, min_sim=0.12):
     try:
         X = vectorizer.transform([text])
         P = vectorizer.transform(patterns)
@@ -133,7 +131,6 @@ def retrieval_fallback(text, min_sim=0.22):
 
 def get_response(intent):
     return random.choice(label_to_responses.get(intent, label_to_responses.get("fallback", ["I'm not sure."])))
-
 
 # --------------------- Sidebar (New Chat, History, Rating) ---------------------
 def new_chat(title=None):
@@ -159,19 +156,16 @@ with st.sidebar:
         if st.button("➕ New Chat"):
             new_chat()
     with cols[1]:
-        # rename current chat title quickly (first user message will also update title)
         new_title = st.text_input("Title", value=st.session_state.current_chat["title"])
         if new_title != st.session_state.current_chat["title"]:
             st.session_state.current_chat["title"] = new_title
             save_chat_to_disk(st.session_state.current_chat)
 
-    # Chat history list
     st.markdown("**History**")
     saved = list_saved_chats()
     labels = [f"{c['title']}  ·  {c['id']}" for c in saved] if saved else []
     selected = st.selectbox("Open chat", options=["(current)"] + labels, index=0)
     if selected != "(current)":
-        # parse id from label
         picked_id = selected.split()[-1]
         loaded = load_chat_by_id(picked_id)
         if loaded:
@@ -179,7 +173,8 @@ with st.sidebar:
 
     st.divider()
     st.header("Settings")
-    threshold = st.slider("Confidence threshold", 0.0, 1.0, 0.55, 0.01)
+    # Default lower threshold to avoid unnecessary fallback
+    threshold = st.slider("Confidence threshold", 0.0, 1.0, 0.45, 0.01)
 
     st.divider()
     st.header("Conversation Rating")
@@ -191,7 +186,7 @@ with st.sidebar:
         st.success("Rating saved.")
 
 # --------------------- Main Chat UI ---------------------
-# Small CSS for chat bubbles
+# Style
 st.markdown("""
 <style>
 section.main > div { max-width: 900px; margin: auto; }
@@ -200,6 +195,9 @@ section.main > div { max-width: 900px; margin: auto; }
 .bot  { background: #161a23; border: 1px solid #2b2b2b; }
 </style>
 """, unsafe_allow_html=True)
+
+st.title("🎓 UniHelp — University Chatbot")
+st.caption("Intent classification + templated responses with retrieval fallback and evaluation.")
 
 # Render existing messages
 for m in st.session_state.current_chat["messages"]:
@@ -210,24 +208,17 @@ for m in st.session_state.current_chat["messages"]:
 # Input
 user_text = st.chat_input("Type your message…")
 if user_text:
-    # Append user message
     st.session_state.current_chat["messages"].append({"role":"user","content":user_text})
     with st.chat_message("user"):
         st.markdown(f"<div class='chat user'>{user_text}</div>", unsafe_allow_html=True)
-
-    # Light title update from first user message
-    if st.session_state.current_chat["title"] in ("New Chat","Welcome") and len(st.session_state.current_chat["messages"]) <= 3:
-        st.session_state.current_chat["title"] = (user_text[:30] + "…") if len(user_text) > 30 else user_text
 
     # Predict intent
     intent, score = predict_intent(user_text)
     if score < threshold:
         intent, score = retrieval_fallback(user_text)
 
-    # Generate response
     bot_text = get_response(intent)
 
-    # Show assistant message + feedback buttons
     with st.chat_message("assistant"):
         st.markdown(f"<div class='chat bot'>{bot_text}</div>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
@@ -238,12 +229,23 @@ if user_text:
             log_row(st.session_state.current_chat["id"], user_text, bot_text, intent, score, feedback="down")
             st.toast("Feedback recorded.")
 
-    # Append and persist
     st.session_state.current_chat["messages"].append({"role":"assistant","content":bot_text})
     log_row(st.session_state.current_chat["id"], user_text, bot_text, intent, score)
     save_chat_to_disk(st.session_state.current_chat)
 
-# --------------------- Evaluation Panel ---------------------
+# --------------------- Debug + Evaluation ---------------------
+with st.expander("🔍 Debug (intent)"):
+    st.write("Last predicted intent and confidence are shown after you send a message.")
+    if st.session_state.current_chat["messages"] and st.session_state.current_chat["messages"][-1]["role"] == "assistant":
+        # Peek at last log row for score/intent if needed (best-effort)
+        try:
+            df = pd.read_csv(LOG_PATH)
+            if len(df):
+                row = df.iloc[-1]
+                st.write(f"Predicted: **{row['intent']}**  • confidence: **{row['score']:.2f}**")
+        except Exception:
+            pass
+
 st.divider()
 st.subheader("📊 Evaluation (from last training)")
 eval_path = os.path.join(REPORTS_DIR, "eval.txt")
@@ -251,4 +253,4 @@ if os.path.exists(eval_path):
     with open(eval_path, "r", encoding="utf-8") as f:
         st.text(f.read())
 else:
-    st.info("No evaluation report yet. Click **Train / Retrain** locally or trigger training by removing models/ then reopening the app.")
+    st.info("No evaluation report yet. Retrain locally (python train_evaluate.py) or delete 'models/' to trigger auto-training.")
