@@ -5,3 +5,5 @@ streamlit
 deep-translator
 langdetect
 plotly
+nltk
+rouge-score
