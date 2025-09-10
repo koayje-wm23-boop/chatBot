@@ -50,7 +50,7 @@ def train_now(data_path=DATA_PATH):
     st.cache_resource.clear()
     st.success("Training complete.")
 
-# ---------------- Load JSON for pattern routing ----------------
+# ---------------- Load JSON ----------------
 def load_intents_json(path=DATA_PATH):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
@@ -68,7 +68,7 @@ def build_pattern_index(intents_json):
         responses = it.get("responses", [])
         if not responses:
             continue
-        resp = responses[0]  # deterministic: first response always
+        resp = responses[0]  # deterministic
         for p in it.get("patterns", []):
             np = norm(p)
             exact_map[np] = (tag, resp)
@@ -182,13 +182,7 @@ if st.session_state.page == "chat":
     </div>
     """, unsafe_allow_html=True)
 
-    # Show chat messages
-    for m in st.session_state.get("messages", []):
-        with st.chat_message(m["role"]):
-            cls = "bot" if m["role"]=="assistant" else "user"
-            st.markdown(f"<div class='bubble {cls}'>{m['content']}</div>", unsafe_allow_html=True)
-
-    # --- FAQ Quick Buttons ---
+    # --- FAQ Quick Buttons at top ---
     st.markdown("### 🔥 Most Asked Questions")
     faq_questions = [
         "What programs are offered?",
@@ -199,9 +193,9 @@ if st.session_state.page == "chat":
         "How do I apply for housing?"
     ]
 
-    cols = st.columns(2)
+    cols = st.columns(3)
     for i, q in enumerate(faq_questions):
-        if cols[i % 2].button(q):
+        if cols[i % 3].button(q):
             st.session_state.messages.append({"role":"user","content":q})
             nuser = norm(q)
 
@@ -224,6 +218,12 @@ if st.session_state.page == "chat":
 
             st.session_state.messages.append({"role":"assistant","content":bot_text})
             st.rerun()
+
+    # --- Chat Messages below ---
+    for m in st.session_state.get("messages", []):
+        with st.chat_message(m["role"]):
+            cls = "bot" if m["role"]=="assistant" else "user"
+            st.markdown(f"<div class='bubble {cls}'>{m['content']}</div>", unsafe_allow_html=True)
 
     # --- User input ---
     user_text = st.chat_input("Type your message…")
@@ -282,7 +282,6 @@ elif st.session_state.page == "evaluation":
             df = pd.DataFrame(data, columns=["Intent", "Precision", "Recall", "F1-score", "Support"])
             st.dataframe(df, use_container_width=True)
 
-            # Summary box
             weighted = df[df["Intent"]=="weighted_avg"]
             if not weighted.empty:
                 p, r, f1 = weighted.iloc[0]["Precision"], weighted.iloc[0]["Recall"], weighted.iloc[0]["F1-score"]
