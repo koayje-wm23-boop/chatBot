@@ -1,29 +1,48 @@
 {
   "intents": [
     {
+      "tag": "programs_offered",
+      "patterns": [
+        "What programs are offered?",
+        "List of courses available",
+        "What majors can I choose?",
+        "Diploma or degree choices",
+        "Postgraduate programmes?",
+        "Study options at TAR UMT",
+        "Which faculties do you have?",
+        "Programme catalogue",
+        "What courses can I apply for?"
+      ],
+      "responses": [
+        "TAR UMT offers Pre-U, Diploma, Undergraduate and Postgraduate programmes across faculties like Engineering, Business, Computing & IT, Built Environment, Communication, Creative Arts, Hospitality and Social Sciences. For the complete and current list, see the Programmes section on the Admissions site."
+      ]
+    },
+    {
       "tag": "admissions",
       "patterns": [
         "How do I apply?",
         "Admissions process",
         "Entry requirements",
-        "How to join the university",
-        "Application steps"
+        "When can I apply?",
+        "Application steps",
+        "Where to submit my application?",
+        "What documents are needed for application?",
+        "Do I need MUET or IELTS?",
+        "Is there an interview?"
       ],
       "responses": [
-        "For TAR UMT, you can apply online via the Admissions Portal. Entry requirements vary by programme and may include academic results, MUET, portfolios, or interviews. More info: https://www.tarc.edu.my/admissions/"
+        "Apply online via the Admissions portal. Requirements vary by programme and may include academic results and English proficiency (e.g., MUET/IELTS). Check the Admissions pages for the latest steps, intakes and document checklist. If you need help, contact the Department of Admissions & Credit Evaluation via their Contact Us page."
       ]
     },
     {
-      "tag": "programs_offered",
+      "tag": "application_status",
       "patterns": [
-        "What programs are offered?",
-        "List of courses available",
-        "Programs at TAR UMT",
-        "What faculties are there?",
-        "Study options"
+        "How to check my application status?",
+        "Application and enrolment status enquiry",
+        "Did my application go through?"
       ],
       "responses": [
-        "TAR UMT offers Pre-University, Diploma, Undergraduate, and Postgraduate programmes across faculties such as Engineering, Business, Computing & IT, Built Environment, Communication, Creative Arts, Hospitality, and Social Science. For the full list, visit https://www.tarc.edu.my/"
+        "You can review programme details, fees and intakes on the site, then track or enquire about your application/enrolment status through the Admissions pages (Application & Enrolment Status Enquiry)."
       ]
     },
     {
@@ -31,51 +50,28 @@
       "patterns": [
         "How much is the tuition fee?",
         "Course fees",
-        "How much does it cost?",
-        "Tuition at TAR UMT",
-        "Programme cost"
+        "Programme cost",
+        "Fee per semester",
+        "Total cost to graduate",
+        "Where can I find fee details?"
       ],
       "responses": [
-        "Tuition fees vary by programme and level of study. As a guideline, diploma and degree fees at TAR UMT are very affordable compared to other private institutions in Malaysia. For the latest breakdown, check: https://www.tarc.edu.my/admissions/"
+        "Tuition and other fees differ by programme and level. Refer to the latest official fee schedule on the Admissions/Fees section for an accurate breakdown by intake and semester."
       ]
     },
     {
       "tag": "scholarships",
       "patterns": [
         "Scholarships available?",
-        "Does TAR UMT offer financial aid?",
+        "Financial aid",
         "What scholarships do you have?",
-        "Fee waivers",
-        "Student financial support"
+        "Merit scholarship",
+        "Bursary options",
+        "Need-based aid information",
+        "Scholarship deadlines"
       ],
       "responses": [
-        "Yes! TAR UMT offers scholarships such as the TARC–TAA Scholarships, merit awards, and need-based bursaries. For details and eligibility criteria, visit: https://www.tarc.edu.my/admissions/scholarships-financial-aid/"
-      ]
-    },
-    {
-      "tag": "campuses",
-      "patterns": [
-        "Where are the campuses located?",
-        "TAR UMT branches",
-        "Campus locations",
-        "Main campus",
-        "Branch campuses"
-      ],
-      "responses": [
-        "TAR UMT has its Main Campus in Kuala Lumpur and branch campuses in Penang, Perak, Johor, Pahang, and Sabah."
-      ]
-    },
-    {
-      "tag": "library",
-      "patterns": [
-        "Library opening hours",
-        "When is the library open?",
-        "Library facilities",
-        "Study in the library",
-        "Library info"
-      ],
-      "responses": [
-        "The Main Library at TAR UMT KL Campus is open on weekdays and Saturdays, with extended hours during exam periods. Facilities include study spaces, online resources, and book lending. Please check the Library’s official page for exact hours: https://web.tarc.edu.my/library/"
+        "TAR UMT offers scholarships and financial aid, including the Merit Scholarship (tuition fee waiver up to 100% for outstanding Malaysian students), plus other schemes. Eligibility and dates vary, so check the Scholarships/Financial Aid pages for current details and forms."
       ]
     },
     {
@@ -84,68 +80,240 @@
         "How do I apply for housing?",
         "On-campus hostel",
         "Student hostel",
-        "Accommodation",
-        "Dormitory"
+        "Accommodation options",
+        "Hostel fees",
+        "Room types available"
       ],
       "responses": [
-        "TAR UMT provides hostel accommodation at its main and selected branch campuses. Students can apply during admission or through the Student Affairs Department. More info: https://www.tarc.edu.my/student-affairs/hostel-accommodation/"
+        "On-campus hostel is offered at selected campuses; off-campus options are listed by the Department of Student Affairs (DSA). See the Accommodation pages to view on-campus info and the DSA Accommodation Listing (filter by campus) for verified off-campus choices and contact details."
+      ]
+    },
+    {
+      "tag": "hostel_application_international",
+      "patterns": [
+        "International student hostel application",
+        "How do international students apply for hostel?",
+        "Student intranet hostel application"
+      ],
+      "responses": [
+        "International students who want on-campus hostel should submit the hostel application via the Student Intranet. For visa, arrival and housing guidance, contact the Department of International Student Office (DISO)."
+      ]
+    },
+    {
+      "tag": "library",
+      "patterns": [
+        "Library opening hours",
+        "When is the library open?",
+        "How to borrow books?",
+        "How to access e-resources?",
+        "Library contact",
+        "Library rules"
+      ],
+      "responses": [
+        "The TAR UMT Library’s office hours are typically 8:30am–5:30pm (Mon–Fri), with services like borrowing, study spaces and online databases. For up-to-date hours, borrowing rules, remote access and contacts, visit the Library site and its Opening Hours, Circulation Services, FAQs and Contact pages."
+      ]
+    },
+    {
+      "tag": "campuses",
+      "patterns": [
+        "Where are the campuses located?",
+        "Branch campuses",
+        "Campus locations",
+        "Do programmes differ by campus?"
+      ],
+      "responses": [
+        "TAR UMT has a Main Campus and several branch campuses. Not all programmes run at every campus. Visit the Campuses/Contact pages to view addresses, available programmes and key contacts for each location."
       ]
     },
     {
       "tag": "contacts",
       "patterns": [
-        "How do I contact TAR UMT?",
-        "Contact info",
-        "Phone number",
+        "How do I contact the university?",
+        "Admissions contact",
+        "General enquiries number",
         "Email address",
-        "Office address"
+        "WhatsApp admissions"
       ],
       "responses": [
-        "You can contact TAR UMT at: \n📍 Main Campus: Jalan Genting Kelang, Setapak, 53300 Kuala Lumpur, Malaysia.\n📞 +603-41450123\n🌐 Visit https://www.tarc.edu.my/contact-us/ for more contacts."
+        "For general and unit-specific contacts, use the official Contact Us pages. For Admissions, see the Department of Admissions & Credit Evaluation contact page for phone, WhatsApp and email; for Student Affairs (financial aid, accommodation, transport), use DSA’s contact page; for Library, use library@tarc.edu.my or the Library Contact page."
+      ]
+    },
+    {
+      "tag": "important_dates",
+      "patterns": [
+        "Academic calendar",
+        "Important dates",
+        "Intake dates",
+        "When does the semester start?",
+        "Exam week schedule",
+        "Orientation date"
+      ],
+      "responses": [
+        "Check the official Academic Calendar for intake start dates, registration deadlines, study weeks and examination periods. Calendars are published per academic year and programme category (e.g., Undergraduate/Postgraduate, Foundation)."
+      ]
+    },
+    {
+      "tag": "payment_methods",
+      "patterns": [
+        "How to pay my fees?",
+        "Payment methods",
+        "Can I pay online?",
+        "Bank transfer details",
+        "Installment plan",
+        "Receipt download"
+      ],
+      "responses": [
+        "Payment options and steps are listed under Finance/Payments on the official site and student portal. Refer there for available methods (e.g., online channels), bank details, deadlines, and receipt/proof-of-payment instructions."
+      ]
+    },
+    {
+      "tag": "student_portal",
+      "patterns": [
+        "How do I access the student portal?",
+        "Reset portal password",
+        "Where to view timetable?",
+        "How to check results online?",
+        "Portal not loading"
+      ],
+      "responses": [
+        "Access the Student Portal with your student ID. You can view your timetable, results, fee statements and announcements. Use the password reset function if you cannot sign in, and contact IT Helpdesk if issues persist."
+      ]
+    },
+    {
+      "tag": "international_students",
+      "patterns": [
+        "Information for international students",
+        "Visa application process",
+        "Student pass renewal",
+        "Medical check-up requirement",
+        "Can I work part-time?",
+        "International office contact"
+      ],
+      "responses": [
+        "For visa, insurance, arrival and housing, contact the Department of International Student Office (DISO). Requirements and timelines vary by nationality and programme; the DISO Contact Information page lists address, phone and email."
+      ]
+    },
+    {
+      "tag": "transport_parking",
+      "patterns": [
+        "How to get to campus?",
+        "Public transport to campus",
+        "Campus shuttle service",
+        "Parking availability",
+        "Parking fees",
+        "Visitor parking"
+      ],
+      "responses": [
+        "Transport and parking details (maps, public transport options, shuttle info and parking guidance) are provided on campus pages and DSA notices. Check your campus page and DSA updates for the latest arrangements."
+      ]
+    },
+    {
+      "tag": "clubs_societies",
+      "patterns": [
+        "Clubs and societies",
+        "How to join a club?",
+        "Sports clubs available",
+        "Cultural societies",
+        "Student association"
+      ],
+      "responses": [
+        "Student Affairs lists the range of co-curricular courses, clubs and societies, with recruitment dates and contacts. See the DSA pages for current club directory and how to join."
+      ]
+    },
+    {
+      "tag": "it_support",
+      "patterns": [
+        "IT helpdesk",
+        "WiFi not working",
+        "Email login problem",
+        "Reset my email password",
+        "Portal error",
+        "Software access for students"
+      ],
+      "responses": [
+        "For IT or network issues, contact the IT Helpdesk. Provide your student ID and error details. Check service notices on the portal; use the self-service password reset or visit the helpdesk if needed."
+      ]
+    },
+    {
+      "tag": "counselling",
+      "patterns": [
+        "Counselling services",
+        "Mental health support",
+        "Who can I talk to?",
+        "How to book counselling?",
+        "Is counselling free?"
+      ],
+      "responses": [
+        "Confidential counselling is available to students via Student Affairs/Counselling Services. Book an appointment through the published channels; emergency contacts are also listed there."
+      ]
+    },
+    {
+      "tag": "sports_facilities",
+      "patterns": [
+        "Sports facilities",
+        "Gym opening hours",
+        "Court booking",
+        "How to book sports facilities?",
+        "Are facilities free for students?"
+      ],
+      "responses": [
+        "Facilities such as gym, courts and fields are available (availability varies by campus). Check your campus Sports Centre or Student Affairs pages for booking procedures, opening hours and access policies."
+      ]
+    },
+    {
+      "tag": "graduation",
+      "patterns": [
+        "Graduation ceremony",
+        "Convocation details",
+        "How to apply for graduation?",
+        "Gown rental",
+        "Guest tickets",
+        "Collecting certificates"
+      ],
+      "responses": [
+        "Convocation dates, venue, gown rental and tickets are announced on the Graduation/Convocation pages and via student email. Ensure all academic and financial requirements are met before submitting your graduation application."
       ]
     },
     {
       "tag": "about",
       "patterns": [
-        "Tell me about TAR UMT",
-        "History of TAR UMT",
-        "When was TAR UC established?",
-        "About the university"
+        "Tell me about the university",
+        "University history",
+        "Is it accredited?",
+        "Rankings information",
+        "Alumni network"
       ],
       "responses": [
-        "TAR UMT, established in 1969 as TAR College and upgraded in 2013 as TAR University College, became Tunku Abdul Rahman University of Management and Technology in 2022. It is one of Malaysia’s oldest and most affordable private institutions, with a strong reputation for quality education."
+        "TAR UMT provides industry-relevant education with strong graduate outcomes. Many programmes carry relevant accreditation. Visit the About pages for milestones, recognitions and collaborations."
       ]
     },
     {
-      "tag": "exam_schedule",
-      "patterns": [
-        "When are the exams?",
-        "Exam schedule",
-        "Exam dates",
-        "Final exams"
+        "tag": "greetings",
+        "patterns": [
+        "Hi",
+        "Hello",
+        "Hey",
+        "Good morning",
+        "Good afternoon",
+        "Good evening",
+        "What's up",
+        "How are you",
+        "Is anyone there?",
+        "Greetings"
       ],
       "responses": [
-        "Exam schedules are released by the Examination Unit each semester. Please check the TAR UMT Academic Calendar or Student Portal for the latest exam dates."
+        "Hello! 👋 How can I help you today?",
+        "Hi there! Ask me anything about TAR UMT admissions, programmes, fees, or campus life.",
+        "Hey! 😊 Looking for info about courses, scholarships, or student life?"
       ]
     },
-    {
-      "tag": "orientation",
-      "patterns": [
-        "When is orientation?",
-        "Orientation week",
-        "Freshers orientation",
-        "First week activities"
-      ],
-      "responses": [
-        "Orientation week for new students is usually held before the start of classes each semester. Activities include campus tours, student society showcases, and briefings by faculty. Dates are announced on the TAR UMT website and Student Portal."
-      ]
-    },
+
     {
       "tag": "fallback",
       "patterns": [],
       "responses": [
         "Sorry, I didn’t quite get that. Could you try asking in another way?",
-        "Hmm, I’m not sure about that. You may check the TAR UMT website for more info: https://www.tarc.edu.my/"
+        "Hmm, I’m not sure about that. Please check the relevant page on the official website for more details."
       ]
     }
   ]
