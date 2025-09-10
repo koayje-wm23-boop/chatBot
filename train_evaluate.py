@@ -1,76 +1,80 @@
-import json
-import os
+# train_evaluate.py
+import json, os
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
-from tensorflow.keras.preprocessing.text import Tokenizer
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Embedding, Dense, GlobalAveragePooling1D
-from tensorflow.keras.utils import to_categorical
+from sklearn.pipeline import Pipeline
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report
 import joblib
 
-def main(data_path="data/intents_university.json", model_dir="models_dl", reports_dir="reports"):
+from utils_text import clean_text
+
+def main(data_path="data/intents_university.json", model_dir="models", reports_dir="reports", random_state=42):
     os.makedirs(model_dir, exist_ok=True)
     os.makedirs(reports_dir, exist_ok=True)
 
-    # --- Load data ---
+    # --- Load JSON dataset ---
     with open(data_path, "r", encoding="utf-8") as f:
         intents = json.load(f)["intents"]
 
     texts, labels = [], []
     label_to_responses = {}
-    for intent in intents:
-        tag = intent["tag"]
-        responses = intent.get("responses", [])
-        if responses:
-            label_to_responses[tag] = responses
-        for pattern in intent.get("patterns", []):
-            texts.append(pattern)
+    for it in intents:
+        tag = it["tag"]
+        resps = it.get("responses", [])
+        if resps:
+            label_to_responses[tag] = resps
+        for p in it.get("patterns", []):
+            texts.append(p)
             labels.append(tag)
+
+    if not texts:
+        raise ValueError("No training patterns found in the JSON.")
 
     # --- Encode labels ---
     le = LabelEncoder()
-    labels_enc = le.fit_transform(labels)
-    num_classes = len(le.classes_)
+    y = le.fit_transform(labels)
 
-    # --- Tokenize text ---
-    tokenizer = Tokenizer(oov_token="<OOV>")
-    tokenizer.fit_on_texts(texts)
-    seqs = tokenizer.texts_to_sequences(texts)
-    maxlen = max(len(s) for s in seqs)
-    X = pad_sequences(seqs, maxlen=maxlen, padding="post")
-    y = to_categorical(labels_enc, num_classes=num_classes)
+    # --- Split (stratify to keep class balance) ---
+    X_train, X_test, y_train, y_test = train_test_split(
+        texts, y, test_size=0.2, random_state=random_state, stratify=y
+    )
 
-    # --- Train/test split ---
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-    # --- Build model ---
-    vocab_size = len(tokenizer.word_index) + 1
-    model = Sequential([
-        Embedding(vocab_size, 64, input_length=maxlen),
-        GlobalAveragePooling1D(),
-        Dense(64, activation="relu"),
-        Dense(num_classes, activation="softmax")
+    # --- Build pipeline (cleaning inside TF-IDF) ---
+    pipe = Pipeline([
+        ("tfidf", TfidfVectorizer(
+            preprocessor=clean_text,      # <<— runs our cleaner
+            ngram_range=(1,2),
+            stop_words="english",         # basic stopword removal
+            min_df=1,
+            max_df=1.0
+        )),
+        ("clf", LogisticRegression(
+            max_iter=2000,
+            C=3.0,
+            class_weight="balanced",
+            random_state=random_state
+        ))
     ])
-    model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
     # --- Train ---
-    history = model.fit(X_train, y_train, epochs=30, batch_size=8, validation_data=(X_test, y_test), verbose=0)
+    pipe.fit(X_train, y_train)
 
     # --- Evaluate ---
-    loss, acc = model.evaluate(X_test, y_test, verbose=0)
-    with open(os.path.join(reports_dir, "eval_dl.txt"), "w") as f:
-        f.write(f"Deep Learning Model Accuracy: {acc:.3f}, Loss: {loss:.3f}\n")
+    y_pred = pipe.predict(X_test)
+    target_names = list(le.classes_)
+    report = classification_report(y_test, y_pred, target_names=target_names, digits=3)
+    with open(os.path.join(reports_dir, "eval.txt"), "w", encoding="utf-8") as f:
+        f.write(report)
 
     # --- Save artifacts ---
-    model.save(os.path.join(model_dir, "dl_intent_model.h5"))
-    joblib.dump(tokenizer, os.path.join(model_dir, "tokenizer.joblib"))
-    joblib.dump(le, os.path.join(model_dir, "label_encoder.joblib"))
+    joblib.dump(pipe, os.path.join(model_dir, "intent_model.joblib"))
     joblib.dump(label_to_responses, os.path.join(model_dir, "label_to_responses.joblib"))
 
-    print("✅ Deep Learning model trained and saved!")
+    print("✅ ML model trained. Reports saved to reports/eval.txt")
 
 if __name__ == "__main__":
     main()
