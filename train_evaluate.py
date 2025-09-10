@@ -16,7 +16,6 @@ from tensorflow.keras.utils import to_categorical
 import joblib
 
 # ---------------- Preprocessing setup ----------------
-nltk.download("punkt")
 nltk.download("stopwords")
 nltk.download("wordnet")
 
@@ -28,8 +27,8 @@ def preprocess_text(text):
     text = text.lower()
     # Remove non-alphabetic characters
     text = re.sub(r"[^a-z\s]", "", text)
-    # Tokenize
-    tokens = nltk.word_tokenize(text)
+    # Tokenize using split (no punkt required)
+    tokens = text.split()
     # Remove stopwords + lemmatize
     tokens = [lemmatizer.lemmatize(w) for w in tokens if w not in stop_words]
     return " ".join(tokens)
