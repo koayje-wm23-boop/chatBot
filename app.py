@@ -182,21 +182,20 @@ if st.session_state.page == "chat":
     </div>
     """, unsafe_allow_html=True)
 
-    # --- FAQ Quick Buttons at top ---
-    st.markdown("### 🔥 Most Asked Questions")
-    faq_questions = [
-        "What programs are offered?",
-        "How much is the tuition fee?",
-        "What scholarships are available?",
-        "Where is the campus located?",
-        "What are the library hours?",
-        "How do I apply for housing?"
-    ]
+    # --- Simple Quick Buttons ---
+    cols = st.columns(6)
+    faq_map = {
+        "Programs": "What programs are offered?",
+        "Fees": "How much is the tuition fee?",
+        "Scholarships": "What scholarships are available?",
+        "Hostel": "How do I apply for housing?",
+        "Library": "What are the library hours?",
+        "Contact": "How do I contact TAR UMT?"
+    }
 
-    cols = st.columns(3)
-    for i, q in enumerate(faq_questions):
-        if cols[i % 3].button(q):
-            st.session_state.messages.append({"role":"user","content":q})
+    for i, (label, q) in enumerate(faq_map.items()):
+        if cols[i].button(label):
+            st.session_state.messages.append({"role": "user", "content": q})
             nuser = norm(q)
 
             if nuser in exact_map:
@@ -216,19 +215,19 @@ if st.session_state.page == "chat":
                         intent, score = retrieval_fallback(q)
                     bot_text = deterministic_response(intent)
 
-            st.session_state.messages.append({"role":"assistant","content":bot_text})
+            st.session_state.messages.append({"role": "assistant", "content": bot_text})
             st.rerun()
 
-    # --- Chat Messages below ---
+    # --- Chat Messages ---
     for m in st.session_state.get("messages", []):
         with st.chat_message(m["role"]):
-            cls = "bot" if m["role"]=="assistant" else "user"
+            cls = "bot" if m["role"] == "assistant" else "user"
             st.markdown(f"<div class='bubble {cls}'>{m['content']}</div>", unsafe_allow_html=True)
 
     # --- User input ---
     user_text = st.chat_input("Type your message…")
     if user_text:
-        st.session_state.messages.append({"role":"user","content":user_text})
+        st.session_state.messages.append({"role": "user", "content": user_text})
         with st.chat_message("user"):
             st.markdown(f"<div class='bubble user'>{user_text}</div>", unsafe_allow_html=True)
 
@@ -254,7 +253,7 @@ if st.session_state.page == "chat":
         with st.chat_message("assistant"):
             st.markdown(f"<div class='bubble bot'>{bot_text}</div>", unsafe_allow_html=True)
 
-        st.session_state.messages.append({"role":"assistant","content":bot_text})
+        st.session_state.messages.append({"role": "assistant", "content": bot_text})
 
 elif st.session_state.page == "evaluation":
     st.title("📊 Model Evaluation")
