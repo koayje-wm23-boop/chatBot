@@ -1,45 +1,9 @@
 import streamlit as st
-import os, json, datetime, uuid, re
+import os, json, datetime, uuid
 import joblib
 import pandas as pd
-import nltk
-from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
 from sklearn.metrics.pairwise import cosine_similarity
 import plotly.express as px
-
-# ---------------- NLTK preprocessing ----------------
-nltk.download("stopwords")
-nltk.download("wordnet")
-
-stop_words = set(stopwords.words("english"))
-lemmatizer = WordNetLemmatizer()
-
-def preprocess_text(text: str) -> str:
-    text = text.lower()
-    text = re.sub(r"[^a-z\s]", "", text)
-    tokens = text.split()
-    processed = []
-    for w in tokens:
-        if w not in stop_words:
-            lemma = lemmatizer.lemmatize(w)
-            processed.append(lemma)
-            if lemma != w:   # keep plural too
-                processed.append(w)
-    # ✅ Sort & deduplicate
-    return " ".join(sorted(set(processed)))
-
-# ---------------- Keyword override map ----------------
-keyword_map = {
-    "fee": "fees",
-    "fees": "fees",
-    "scholarship": "scholarship",
-    "scholarships": "scholarship",
-    "hostel": "hostel",
-    "program": "programs_offered",
-    "programs": "programs_offered",
-    "about": "about"
-}
 
 # ---------------- Basic setup ----------------
 st.set_page_config(page_title="🎓 UniHelp", page_icon="🎓", layout="centered")
@@ -110,7 +74,7 @@ def build_pattern_index(intents_json):
             np = norm(p)
             exact_map[np] = (tag, resp)
             contains_list.append((np, tag, resp))
-            patterns.append(preprocess_text(p))  # ✅ preprocess patterns
+            patterns.append(p)
             p2l[p] = tag
     return exact_map, contains_list, patterns, p2l
 
@@ -124,25 +88,14 @@ exact_map, contains_list, patterns, pattern_to_label = build_pattern_index(inten
 
 # ---------------- Inference utils ----------------
 def predict_intent(text):
-    pre_text = preprocess_text(text)
-    probs = model.predict_proba([pre_text])[0]
+    probs = model.predict_proba([text])[0]
     labels = model.classes_
     j = probs.argmax()
     return labels[j], float(probs[j])
 
-def retrieval_fallback(text, min_sim=0.1):
+def retrieval_fallback(text, min_sim=0.12):
     try:
-        pre_text = preprocess_text(text)
-        words = pre_text.split()
-
-        # Special case: one-word queries
-        if len(words) == 1:
-            for npat, tag, resp in contains_list:
-                if words[0] in npat.split():
-                    return tag, 1.0
-
-        # fallback to cosine similarity
-        X = vectorizer.transform([pre_text])
+        X = vectorizer.transform([text])
         P = vectorizer.transform(patterns)
         sims = cosine_similarity(X, P)[0]
         j = sims.argmax()
@@ -157,25 +110,6 @@ def deterministic_response(intent: str) -> str:
         if it["tag"] == intent and it.get("responses"):
             return it["responses"][0]
     return label_to_responses.get("fallback", ["I'm not sure."])[0]
-
-# ---------------- Master query handler ----------------
-def handle_query(user_text, threshold=0.3):
-    pre_text = preprocess_text(user_text)
-    words = pre_text.split()
-
-    # ✅ Step 1: Direct keyword override FIRST
-    for w in words:
-        if w in keyword_map:
-            return keyword_map[w], 1.0
-
-    # Step 2: Predict with ML
-    intent, score = predict_intent(user_text)
-
-    # Step 3: If below threshold, use retrieval
-    if score < threshold:
-        intent, score = retrieval_fallback(user_text)
-
-    return intent, score
 
 # ---------------- Sidebar ----------------
 def new_chat():
@@ -204,11 +138,14 @@ with st.sidebar:
         st.session_state.page = "evaluation"
         st.rerun()
 
+    # --- Bottom section ---
+    st.markdown("### ")
+    st.markdown("### ")
     st.markdown("---")
 
     threshold = st.slider(
         "Confidence threshold (used if no pattern match)", 
-        0.0, 1.0, 0.30, 0.01,
+        0.0, 1.0, 0.45, 0.01,
         help="Lower = more answers but less accurate. Higher = fewer answers but more accurate."
     )
 
@@ -233,11 +170,18 @@ section.main > div { max-width: 850px; margin: auto; }
 .bubble { border-radius: 14px; padding: 10px 14px; margin: 6px 0; }
 .user { background: #0e1117; border: 1px solid #2b2b2b; }
 .bot  { background: #161a23; border: 1px solid #2b2b2b; }
+button[kind="secondary"] {
+    border-radius: 20px !important;
+    padding: 8px 16px;
+    font-size: 15px;
+    font-weight: 500;
+}
 </style>
 """, unsafe_allow_html=True)
 
 # ---------------- Page content ----------------
 if st.session_state.page == "chat":
+    # Header
     st.markdown("""
     <div style="text-align:center; padding: 10px;">
       <h1 style="color:#f5f5f5; font-size: 38px;">🎓 UniHelp</h1>
@@ -245,7 +189,7 @@ if st.session_state.page == "chat":
     </div>
     """, unsafe_allow_html=True)
 
-    # --- Quick Access Buttons ---
+    # --- Quick Access Buttons (2 rows) ---
     faq_map = {
         "🎓 Programs": "What programs are offered?",
         "💰 Fees": "How much is the tuition fee?",
@@ -264,8 +208,23 @@ if st.session_state.page == "chat":
         if cols1[i].button(labels[i], use_container_width=True):
             q = queries[i]
             st.session_state.messages.append({"role": "user", "content": q})
-            intent, score = handle_query(q, threshold)
-            bot_text = deterministic_response(intent)
+            nuser = norm(q)
+            if nuser in exact_map:
+                tag, resp = exact_map[nuser]
+                bot_text = resp
+            else:
+                found = None
+                for npat, tag, resp in contains_list:
+                    if npat and npat in nuser:
+                        found = (tag, resp); break
+                if found:
+                    tag, resp = found
+                    bot_text = resp
+                else:
+                    intent, score = predict_intent(q)
+                    if score < threshold:
+                        intent, score = retrieval_fallback(q)
+                    bot_text = deterministic_response(intent)
             st.session_state.messages.append({"role": "assistant", "content": bot_text})
             st.rerun()
 
@@ -275,8 +234,23 @@ if st.session_state.page == "chat":
         if cols2[i-3].button(labels[i], use_container_width=True):
             q = queries[i]
             st.session_state.messages.append({"role": "user", "content": q})
-            intent, score = handle_query(q, threshold)
-            bot_text = deterministic_response(intent)
+            nuser = norm(q)
+            if nuser in exact_map:
+                tag, resp = exact_map[nuser]
+                bot_text = resp
+            else:
+                found = None
+                for npat, tag, resp in contains_list:
+                    if npat and npat in nuser:
+                        found = (tag, resp); break
+                if found:
+                    tag, resp = found
+                    bot_text = resp
+                else:
+                    intent, score = predict_intent(q)
+                    if score < threshold:
+                        intent, score = retrieval_fallback(q)
+                    bot_text = deterministic_response(intent)
             st.session_state.messages.append({"role": "assistant", "content": bot_text})
             st.rerun()
 
@@ -293,9 +267,24 @@ if st.session_state.page == "chat":
         with st.chat_message("user"):
             st.markdown(f"<div class='bubble user'>{user_text}</div>", unsafe_allow_html=True)
 
-        intent, score = handle_query(user_text, threshold)
-        bot_text = deterministic_response(intent)
-        log_row(st.session_state.chat_id, user_text, bot_text, "ml", intent=intent, score=score)
+        nuser = norm(user_text)
+        if nuser in exact_map:
+            tag, resp = exact_map[nuser]
+            bot_text = resp
+        else:
+            found = None
+            for npat, tag, resp in contains_list:
+                if npat and npat in nuser:
+                    found = (tag, resp); break
+            if found:
+                tag, resp = found
+                bot_text = resp
+            else:
+                intent, score = predict_intent(user_text)
+                if score < threshold:
+                    intent, score = retrieval_fallback(user_text)
+                bot_text = deterministic_response(intent)
+                log_row(st.session_state.chat_id, user_text, bot_text, "ml", intent=intent, score=score)
 
         with st.chat_message("assistant"):
             st.markdown(f"<div class='bubble bot'>{bot_text}</div>", unsafe_allow_html=True)
@@ -328,6 +317,7 @@ elif st.session_state.page == "evaluation":
             df = pd.DataFrame(data, columns=["Intent", "Precision", "Recall", "F1-score", "Support"])
             st.dataframe(df, use_container_width=True)
 
+            # ---- Graphs ----
             st.markdown("### 📊 Intent-wise Performance")
             fig_f1 = px.bar(df[df["Intent"] != "weighted_avg"],
                             x="Intent", y="F1-score",
