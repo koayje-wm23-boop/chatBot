@@ -4,7 +4,7 @@ import joblib
 import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
-from tensorflow.keras.preprocessing.sequence import pad_sequences
+from keras_preprocessing.sequence import pad_sequences
 from tensorflow.keras.models import load_model
 import plotly.express as px
 
