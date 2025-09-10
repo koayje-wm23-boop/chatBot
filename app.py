@@ -116,10 +116,14 @@ def predict_intent(text):
 def retrieval_fallback(text, min_sim=0.1):  # lowered threshold
     try:
         pre_text = preprocess_text(text)
-        # ✅ keyword overlap check
-        for npat, tag, resp in contains_list:
-            if any(word in npat for word in pre_text.split()):
-                return tag, 1.0
+        words = pre_text.split()
+
+        # ✅ Special case: one-word queries ("about", "program", "fees", etc.)
+        if len(words) == 1:
+            for npat, tag, resp in contains_list:
+                if words[0] in npat.split():
+                    return tag, 1.0
+
         # fallback to cosine similarity
         X = vectorizer.transform([pre_text])
         P = vectorizer.transform(patterns)
