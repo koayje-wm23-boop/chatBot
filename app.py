@@ -169,6 +169,12 @@ section.main > div { max-width: 850px; margin: auto; }
 .bubble { border-radius: 14px; padding: 10px 14px; margin: 6px 0; }
 .user { background: #0e1117; border: 1px solid #2b2b2b; }
 .bot  { background: #161a23; border: 1px solid #2b2b2b; }
+button[kind="secondary"] {
+    border-radius: 20px !important;
+    padding: 8px 16px;
+    font-size: 15px;
+    font-weight: 500;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -182,19 +188,52 @@ if st.session_state.page == "chat":
     </div>
     """, unsafe_allow_html=True)
 
-    # --- Simple Quick Buttons ---
-    cols = st.columns(6)
+    # --- Quick Access Buttons (2 rows) ---
     faq_map = {
-        "Programs": "What programs are offered?",
-        "Fees": "How much is the tuition fee?",
-        "Scholarships": "What scholarships are available?",
-        "Hostel": "How do I apply for housing?",
-        "Library": "What are the library hours?",
-        "Contact": "How do I contact TAR UMT?"
+        "🎓 Programs": "What programs are offered?",
+        "💰 Fees": "How much is the tuition fee?",
+        "🎓 Scholarships": "What scholarships are available?",
+        "🏠 Hostel": "How do I apply for housing?",
+        "📚 Library": "What are the library hours?",
+        "☎️ Contact": "How do I contact TAR UMT?"
     }
 
-    for i, (label, q) in enumerate(faq_map.items()):
-        if cols[i].button(label):
+    labels = list(faq_map.keys())
+    queries = list(faq_map.values())
+
+    # First row
+    cols1 = st.columns(3, gap="medium")
+    for i in range(3):
+        if cols1[i].button(labels[i], use_container_width=True):
+            q = queries[i]
+            st.session_state.messages.append({"role": "user", "content": q})
+            nuser = norm(q)
+
+            if nuser in exact_map:
+                tag, resp = exact_map[nuser]
+                bot_text = resp
+            else:
+                found = None
+                for npat, tag, resp in contains_list:
+                    if npat and npat in nuser:
+                        found = (tag, resp); break
+                if found:
+                    tag, resp = found
+                    bot_text = resp
+                else:
+                    intent, score = predict_intent(q)
+                    if score < threshold:
+                        intent, score = retrieval_fallback(q)
+                    bot_text = deterministic_response(intent)
+
+            st.session_state.messages.append({"role": "assistant", "content": bot_text})
+            st.rerun()
+
+    # Second row
+    cols2 = st.columns(3, gap="medium")
+    for i in range(3, 6):
+        if cols2[i-3].button(labels[i], use_container_width=True):
+            q = queries[i]
             st.session_state.messages.append({"role": "user", "content": q})
             nuser = norm(q)
 
