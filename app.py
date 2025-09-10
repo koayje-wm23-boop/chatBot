@@ -114,7 +114,7 @@ def deterministic_response(intent: str) -> str:
 def new_chat():
     st.session_state.chat_id = str(uuid.uuid4())[:8]
     st.session_state.messages = [
-        {"role":"assistant","content":"Hi! Ask about admissions, programs, tuition, scholarships, library, housing, or contacts."}
+        {"role":"assistant","content":"Hi! Ask about TAR UMT admissions, programs, tuition, scholarships, library, housing, or contacts."}
     ]
 if "chat_id" not in st.session_state:
     new_chat()
@@ -137,9 +137,9 @@ with st.sidebar:
         st.session_state.page = "evaluation"
         st.rerun()
 
-    # --- Push threshold & rating to bottom ---
+    # --- Bottom section ---
     st.markdown("### ")
-    st.markdown("### ")  # spacer
+    st.markdown("### ")
     st.markdown("---")
 
     threshold = st.slider(
@@ -178,7 +178,7 @@ if st.session_state.page == "chat":
     st.markdown("""
     <div style="text-align:center; padding: 10px;">
       <h1 style="color:#f5f5f5; font-size: 38px;">🎓 UniHelp</h1>
-      <p style="color: #bbbbbb; font-size:18px;">Your University Virtual Assistant — Ask me about admissions, tuition, scholarships, library, housing, or student life.</p>
+      <p style="color: #bbbbbb; font-size:18px;">TAR UMT Virtual Assistant — Ask me about admissions, tuition, scholarships, library, housing, or student life.</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -202,7 +202,6 @@ if st.session_state.page == "chat":
     cols = st.columns(2)
     for i, q in enumerate(faq_questions):
         if cols[i % 2].button(q):
-            # Simulate user input
             st.session_state.messages.append({"role":"user","content":q})
             nuser = norm(q)
 
