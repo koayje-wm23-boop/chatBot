@@ -18,8 +18,10 @@ lemmatizer = WordNetLemmatizer()
 def preprocess_text(text: str) -> str:
     text = text.lower()
     text = re.sub(r"[^a-z\s]", "", text)
-    tokens = text.split()  # lightweight tokenizer
+    tokens = text.split()
     tokens = [lemmatizer.lemmatize(w) for w in tokens if w not in stop_words]
+    # ✅ Sort tokens alphabetically so "program offer" and "offer program" are treated the same
+    tokens = sorted(tokens)
     return " ".join(tokens)
 
 # ---------------- Basic setup ----------------
@@ -91,7 +93,7 @@ def build_pattern_index(intents_json):
             np = norm(p)
             exact_map[np] = (tag, resp)
             contains_list.append((np, tag, resp))
-            patterns.append(p)
+            patterns.append(preprocess_text(p))  # ✅ preprocess patterns
             p2l[p] = tag
     return exact_map, contains_list, patterns, p2l
 
@@ -111,9 +113,14 @@ def predict_intent(text):
     j = probs.argmax()
     return labels[j], float(probs[j])
 
-def retrieval_fallback(text, min_sim=0.12):
+def retrieval_fallback(text, min_sim=0.1):  # lowered threshold
     try:
-        pre_text = preprocess_text(text)   # <--- preprocess input
+        pre_text = preprocess_text(text)
+        # ✅ keyword overlap check
+        for npat, tag, resp in contains_list:
+            if any(word in npat for word in pre_text.split()):
+                return tag, 1.0
+        # fallback to cosine similarity
         X = vectorizer.transform([pre_text])
         P = vectorizer.transform(patterns)
         sims = cosine_similarity(X, P)[0]
@@ -164,7 +171,7 @@ with st.sidebar:
 
     threshold = st.slider(
         "Confidence threshold (used if no pattern match)", 
-        0.0, 1.0, 0.45, 0.01,
+        0.0, 1.0, 0.30, 0.01,
         help="Lower = more answers but less accurate. Higher = fewer answers but more accurate."
     )
 
@@ -208,7 +215,7 @@ if st.session_state.page == "chat":
     </div>
     """, unsafe_allow_html=True)
 
-    # --- Quick Access Buttons (2 rows) ---
+    # --- Quick Access Buttons ---
     faq_map = {
         "🎓 Programs": "What programs are offered?",
         "💰 Fees": "How much is the tuition fee?",
