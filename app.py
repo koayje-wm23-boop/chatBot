@@ -3,7 +3,6 @@ import os, json, datetime, uuid
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.metrics.pairwise import cosine_similarity
 from tensorflow.keras.models import load_model
 from keras_preprocessing.sequence import pad_sequences
 import plotly.express as px
@@ -16,31 +15,9 @@ DL_MODEL_DIR= "models_dl"
 DATA_PATH   = "data/intents_university.json"
 REPORTS_DIR = "reports"
 LOG_DIR     = "logs"
-CHAT_CSV    = os.path.join(LOG_DIR, "chat_logs.csv")
 
 os.makedirs(LOG_DIR, exist_ok=True)
 os.makedirs(REPORTS_DIR, exist_ok=True)
-
-# ---------------- Logging ----------------
-def ensure_chat_csv():
-    if not os.path.exists(CHAT_CSV):
-        pd.DataFrame(columns=["timestamp","chat_id","user","bot","model","intent","score"]).to_csv(CHAT_CSV, index=False)
-
-def log_row(chat_id, user, bot, model, intent=None, score=None):
-    ensure_chat_csv()
-    ts = datetime.datetime.now().isoformat(timespec="seconds")
-    pd.DataFrame([{
-        "timestamp": ts, "chat_id": chat_id, "user": user,
-        "bot": bot, "model": model, "intent": intent, "score": score
-    }]).to_csv(CHAT_CSV, mode="a", header=False, index=False)
-
-# ---------------- Load JSON ----------------
-def load_intents_json(path=DATA_PATH):
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-def norm(s: str) -> str:
-    return " ".join(s.lower().strip().split())
 
 # ---------------- Load ML Artifacts ----------------
 @st.cache_resource
@@ -60,7 +37,7 @@ def try_load_dl():
         label_to_responses = joblib.load(os.path.join(DL_MODEL_DIR, "label_to_responses.joblib"))
         return model, tokenizer, le, label_to_responses
     except Exception as e:
-        st.warning(f"⚠️ Deep Learning model not available, fallback to ML. ({e})")
+        st.warning(f"⚠️ DL model not available. Fallback only to ML. ({e})")
         return None, None, None, None
 
 # ---------------- Predictors ----------------
@@ -77,9 +54,8 @@ def predict_dl(text, model, tokenizer, le, maxlen=20):
     idx = np.argmax(probs)
     return le.classes_[idx], float(probs[idx])
 
-# ---------------- Sidebar ----------------
-if "chat_id" not in st.session_state:
-    st.session_state.chat_id = str(uuid.uuid4())[:8]
+# ---------------- UI State ----------------
+if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role":"assistant","content":"Hi! You can ask about TAR UMT admissions, programs, fees, scholarships, hostel, or library."}
     ]
@@ -87,39 +63,20 @@ if "chat_id" not in st.session_state:
 if "page" not in st.session_state:
     st.session_state.page = "chat"
 
+# ---------------- Sidebar ----------------
 with st.sidebar:
     st.header("UniHelp")
     if st.button("➕ New Chat"):
-        st.session_state.chat_id = str(uuid.uuid4())[:8]
         st.session_state.messages = [
             {"role":"assistant","content":"Hi! You can ask about TAR UMT admissions, programs, fees, scholarships, hostel, or library."}
         ]
         st.rerun()
 
-    # Model selection
-    model_type = st.radio("Select Model", ["ML (TF-IDF)", "DL (Neural Net)"])
-
-    # Retrain buttons
-    if st.button("🔁 Retrain ML"):
-        from train_evaluate import main as train_ml
-        train_ml(DATA_PATH, MODEL_DIR, REPORTS_DIR)
-        st.cache_resource.clear()
-        st.success("ML Model retrained.")
-
-    if st.button("🔁 Retrain DL"):
-        from train_evaluate_dl import main as train_dl
-        train_dl(DATA_PATH, DL_MODEL_DIR, REPORTS_DIR)
-        st.cache_resource.clear()
-        st.success("DL Model retrained.")
-
-    st.markdown("---")
     if st.button("💬 Chat"): st.session_state.page = "chat"; st.rerun()
     if st.button("📊 Evaluation"): st.session_state.page = "evaluation"; st.rerun()
 
     st.markdown("---")
-    threshold = st.slider("Confidence threshold", 0.0, 1.0, 0.45, 0.01)
-    rating = st.select_slider("⭐ Rate this chat", options=[1,2,3,4,5], value=3)
-    if st.button("Save rating"): st.toast("Thanks for your rating!")
+    threshold = st.slider("Confidence threshold", 0.0, 1.0, 0.3, 0.01)
 
 # ---------------- Styling ----------------
 st.markdown("""
@@ -128,7 +85,6 @@ section.main > div { max-width: 850px; margin: auto; }
 .bubble { border-radius: 14px; padding: 10px 14px; margin: 6px 0; }
 .user { background: #0e1117; border: 1px solid #2b2b2b; }
 .bot  { background: #161a23; border: 1px solid #2b2b2b; }
-button[kind="secondary"] { border-radius: 20px !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -136,54 +92,50 @@ button[kind="secondary"] { border-radius: 20px !important; }
 if st.session_state.page == "chat":
     st.markdown("<h1 style='text-align:center'>🎓 UniHelp</h1>", unsafe_allow_html=True)
 
-    # Quick Access Buttons
+    # Quick Buttons
     faq_map = {
-        "🎓 Programs": "What programs are offered?",
-        "💰 Fees": "How much is the tuition fee?",
-        "🎓 Scholarships": "What scholarships are available?",
-        "🏠 Hostel": "How do I apply for housing?",
-        "📚 Library": "What are the library hours?",
-        "☎️ Contact": "How do I contact TAR UMT?"
+        "Programs": "What programs are offered?",
+        "Fees": "How much is the tuition fee?",
+        "Scholarships": "What scholarships are available?",
+        "Hostel": "How do I apply for housing?",
+        "Library": "What are the library hours?",
+        "Contact": "How do I contact TAR UMT?"
     }
-    labels, queries = list(faq_map.keys()), list(faq_map.values())
-    cols1, cols2 = st.columns(3), st.columns(3)
-    for i, col in enumerate(cols1):
-        if col.button(labels[i], use_container_width=True):
-            st.session_state.messages.append({"role":"user","content":queries[i]}); st.rerun()
-    for i, col in enumerate(cols2):
-        if col.button(labels[i+3], use_container_width=True):
-            st.session_state.messages.append({"role":"user","content":queries[i+3]}); st.rerun()
+    cols1, cols2, cols3 = st.columns(3)
+    for i, label in enumerate(faq_map.keys()):
+        if (i < 3 and cols1.button(label)) or (i >= 3 and (cols2 if i<6 else cols3).button(label)):
+            st.session_state.messages.append({"role":"user","content":faq_map[label]})
+            st.rerun()
 
-    # Chat History
+    # Display history
     for m in st.session_state.messages:
         with st.chat_message(m["role"]):
             cls = "bot" if m["role"]=="assistant" else "user"
             st.markdown(f"<div class='bubble {cls}'>{m['content']}</div>", unsafe_allow_html=True)
 
-    # User Input
+    # Input
     user_text = st.chat_input("Type your message…")
     if user_text:
         st.session_state.messages.append({"role":"user","content":user_text})
 
-        if model_type.startswith("ML"):
-            model, vectorizer, label_to_responses = load_ml_artifacts()
-            intent, score = predict_ml(user_text, model, vectorizer)
-        else:
-            dl_model, tokenizer, le, label_to_responses = try_load_dl()
-            if dl_model is None:
-                model, vectorizer, label_to_responses = load_ml_artifacts()
-                intent, score = predict_ml(user_text, model, vectorizer)
-                model_type = "ML (Fallback)"
-            else:
-                intent, score = predict_dl(user_text, dl_model, tokenizer, le)
+        # Load models
+        ml_model, vectorizer, ml_responses = load_ml_artifacts()
+        dl_model, tokenizer, le, dl_responses = try_load_dl()
 
-        if score < threshold:
-            response = "Sorry, I’m not confident about that. Please try rephrasing."
-        else:
-            response = label_to_responses.get(intent, ["I'm not sure."])[0]
+        # ML prediction
+        ml_intent, ml_score = predict_ml(user_text, ml_model, vectorizer)
+        ml_answer = ml_responses.get(ml_intent, ["I'm not sure."])[0] if ml_score >= threshold else "Sorry (ML) not confident."
 
-        st.session_state.messages.append({"role":"assistant","content":response})
-        log_row(st.session_state.chat_id, user_text, response, model_type, intent, score)
+        # DL prediction
+        if dl_model:
+            dl_intent, dl_score = predict_dl(user_text, dl_model, tokenizer, le)
+            dl_answer = dl_responses.get(dl_intent, ["I'm not sure."])[0] if dl_score >= threshold else "Sorry (DL) not confident."
+        else:
+            dl_answer = "⚠️ DL model unavailable."
+
+        # Show both
+        st.session_state.messages.append({"role":"assistant","content":f"🤖 **ML:** {ml_answer}"})
+        st.session_state.messages.append({"role":"assistant","content":f"🧠 **DL:** {dl_answer}"})
         st.rerun()
 
 # ---------------- Evaluation Page ----------------
@@ -193,38 +145,8 @@ elif st.session_state.page == "evaluation":
     # ML evaluation
     eval_path = os.path.join(REPORTS_DIR, "eval.txt")
     if os.path.exists(eval_path):
-        with open(eval_path, "r") as f: lines = f.readlines()
-        data = []
-        for line in lines:
-            parts = line.strip().split()
-            if len(parts) >= 4 and not parts[0].startswith("="):
-                try:
-                    intent = parts[0]
-                    prec, rec, f1 = float(parts[1]), float(parts[2]), float(parts[3])
-                    support = int(parts[4]) if len(parts) > 4 and parts[4].isdigit() else "-"
-                    data.append([intent, prec, rec, f1, support])
-                except: continue
-        if data:
-            df = pd.DataFrame(data, columns=["Intent","Precision","Recall","F1-score","Support"])
-            st.subheader("ML (TF-IDF) Evaluation")
-            st.dataframe(df, use_container_width=True)
-
-            st.markdown("### 📊 Intent-wise F1 Score")
-            fig_f1 = px.bar(df[df["Intent"]!="weighted_avg"], x="Intent", y="F1-score", color="F1-score", text="F1-score", range_y=[0,1])
-            st.plotly_chart(fig_f1, use_container_width=True)
-
-            col1, col2 = st.columns(2)
-            with col1:
-                fig_prec = px.bar(df[df["Intent"]!="weighted_avg"], x="Intent", y="Precision", color="Precision", text="Precision", range_y=[0,1])
-                st.plotly_chart(fig_prec, use_container_width=True)
-            with col2:
-                fig_rec = px.bar(df[df["Intent"]!="weighted_avg"], x="Intent", y="Recall", color="Recall", text="Recall", range_y=[0,1])
-                st.plotly_chart(fig_rec, use_container_width=True)
-
-            if "Support" in df.columns:
-                st.markdown("### 📊 Training Data Distribution")
-                fig_pie = px.pie(df[df["Intent"]!="weighted_avg"], names="Intent", values="Support", title="Samples per Intent")
-                st.plotly_chart(fig_pie, use_container_width=True)
+        st.subheader("ML (TF-IDF) Evaluation")
+        st.text(open(eval_path).read())
 
     # DL evaluation
     eval_dl_path = os.path.join(REPORTS_DIR, "eval_dl.txt")
