@@ -169,18 +169,43 @@ section.main > div { max-width: 850px; margin: auto; }
 .bubble { border-radius: 14px; padding: 10px 14px; margin: 6px 0; }
 .user { background: #0e1117; border: 1px solid #2b2b2b; }
 .bot  { background: #161a23; border: 1px solid #2b2b2b; }
+.chat-box {
+  background: #11141c;
+  padding: 20px;
+  border-radius: 16px;
+  min-height: 400px;
+  max-height: 600px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
 </style>
 """, unsafe_allow_html=True)
 
 # ---------------- Page content ----------------
 if st.session_state.page == "chat":
-    st.title("🎓 UniHelp")
+    # Header
+    st.markdown("""
+    <div style="text-align:center; padding: 10px;">
+      <h1 style="color:#f5f5f5; font-size: 38px;">🎓 UniHelp</h1>
+      <p style="color: #bbbbbb; font-size:18px;">Your University Virtual Assistant — Ask me about admissions, tuition, scholarships, library, housing, or student life.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Chat container
+    st.markdown("<div class='chat-box'>", unsafe_allow_html=True)
 
     for m in st.session_state.get("messages", []):
         with st.chat_message(m["role"]):
             cls = "bot" if m["role"]=="assistant" else "user"
             st.markdown(f"<div class='bubble {cls}'>{m['content']}</div>", unsafe_allow_html=True)
 
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # Empty state
+    if len(st.session_state.messages) == 1:  
+        st.info("✨ Start chatting by asking about admissions, fees, programs, or campus life.")
+
+    # Input
     user_text = st.chat_input("Type your message…")
     if user_text:
         st.session_state.messages.append({"role":"user","content":user_text})
@@ -241,7 +266,18 @@ elif st.session_state.page == "evaluation":
 
         if data:
             df = pd.DataFrame(data, columns=["Intent", "Precision", "Recall", "F1-score", "Support"])
-            st.table(df)
+            st.dataframe(df, use_container_width=True)
+
+            # Summary box
+            weighted = df[df["Intent"]=="weighted_avg"]
+            if not weighted.empty:
+                p, r, f1 = weighted.iloc[0]["Precision"], weighted.iloc[0]["Recall"], weighted.iloc[0]["F1-score"]
+                st.markdown(f"""
+                <div style="padding:15px; background:#161a23; border-radius:12px; margin-top:15px;">
+                  <h3 style="margin:0; color:#f5f5f5;">📊 Overall Performance</h3>
+                  <p style="margin:0; color:#bbb;">Weighted Precision: <b>{p:.2f}</b> • Recall: <b>{r:.2f}</b> • F1 Score: <b>{f1:.2f}</b></p>
+                </div>
+                """, unsafe_allow_html=True)
         else:
             st.warning("Could not parse evaluation file. Try retraining the model first.")
     else:
