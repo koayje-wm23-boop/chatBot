@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 
 # ---------------- Basic setup ----------------
-st.set_page_config(page_title="UniHelp", page_icon="🎓", layout="centered")
+st.set_page_config(page_title="🎓 UniHelp", page_icon="🎓", layout="centered")
 
 MODEL_DIR   = "models"
 DATA_PATH   = "data/intents_university.json"
@@ -110,14 +110,17 @@ def deterministic_response(intent: str) -> str:
             return it["responses"][0]
     return label_to_responses.get("fallback", ["I'm not sure."])[0]
 
-# ---------------- Sidebar (simple) ----------------
+# ---------------- Sidebar ----------------
 def new_chat():
     st.session_state.chat_id = str(uuid.uuid4())[:8]
     st.session_state.messages = [
-        {"role":"assistant","content":"Hi! Ask about entry requirements, fees, scholarships, programs, library, hostel, or contacts."}
+        {"role":"assistant","content":"Hi! Ask about admissions, programs, tuition, scholarships, library, housing, or contacts."}
     ]
 if "chat_id" not in st.session_state:
     new_chat()
+
+if "page" not in st.session_state:
+    st.session_state.page = "chat"
 
 with st.sidebar:
     st.header("UniHelp")
@@ -126,6 +129,14 @@ with st.sidebar:
         st.rerun()
     retrain = st.button("🔁 Retrain model")
     threshold = st.slider("Confidence threshold (used only if no pattern match)", 0.0, 1.0, 0.45, 0.01)
+
+    st.markdown("---")
+    if st.button("💬 Chat"):
+        st.session_state.page = "chat"
+        st.rerun()
+    if st.button("📊 Evaluation"):
+        st.session_state.page = "evaluation"
+        st.rerun()
 
 if retrain:
     train_now(DATA_PATH)
@@ -143,85 +154,77 @@ section.main > div { max-width: 850px; margin: auto; }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🎓 UniHelp")
+# ---------------- Page content ----------------
+if st.session_state.page == "chat":
+    st.title("🎓 UniHelp")
 
-# ---------------- Render history ----------------
-for m in st.session_state.get("messages", []):
-    with st.chat_message(m["role"]):
-        cls = "bot" if m["role"]=="assistant" else "user"
-        st.markdown(f"<div class='bubble {cls}'>{m['content']}</div>", unsafe_allow_html=True)
+    for m in st.session_state.get("messages", []):
+        with st.chat_message(m["role"]):
+            cls = "bot" if m["role"]=="assistant" else "user"
+            st.markdown(f"<div class='bubble {cls}'>{m['content']}</div>", unsafe_allow_html=True)
 
-# ---------------- Chat input ----------------
-user_text = st.chat_input("Type your message…")
-if user_text:
-    st.session_state.messages.append({"role":"user","content":user_text})
-    with st.chat_message("user"):
-        st.markdown(f"<div class='bubble user'>{user_text}</div>", unsafe_allow_html=True)
+    user_text = st.chat_input("Type your message…")
+    if user_text:
+        st.session_state.messages.append({"role":"user","content":user_text})
+        with st.chat_message("user"):
+            st.markdown(f"<div class='bubble user'>{user_text}</div>", unsafe_allow_html=True)
 
-    # 1) Exact match
-    nuser = norm(user_text)
-    if nuser in exact_map:
-        tag, resp = exact_map[nuser]
-        route = "pattern_exact"
-        bot_text = resp
-
-    # 2) Contains match
-    else:
-        found = None
-        for npat, tag, resp in contains_list:
-            if npat and npat in nuser:
-                found = (tag, resp); break
-        if found:
-            tag, resp = found
-            route = "pattern_contains"
+        nuser = norm(user_text)
+        if nuser in exact_map:
+            tag, resp = exact_map[nuser]
+            route = "pattern_exact"
             bot_text = resp
         else:
-            # 3) ML classification
-            intent, score = predict_intent(user_text)
-            if score < threshold:
-                intent, score = retrieval_fallback(user_text)
-            bot_text = deterministic_response(intent)
-            route = "ml" if intent != "fallback" else "fallback"
-            log_row(st.session_state.chat_id, user_text, bot_text, route, intent=intent, score=score)
-
-    with st.chat_message("assistant"):
-        st.markdown(f"<div class='bubble bot'>{bot_text}</div>", unsafe_allow_html=True)
-
-    if 'route' in locals() and route.startswith("pattern"):
-        log_row(st.session_state.chat_id, user_text, bot_text, route, intent=tag, score=1.0)
-
-    st.session_state.messages.append({"role":"assistant","content":bot_text})
-
-# ---------------- Evaluation (sidebar) ----------------
-with st.sidebar:
-    st.markdown("---")
-    if st.button("📊 Show Evaluation"):
-        eval_path = os.path.join(REPORTS_DIR, "eval.txt")
-        if os.path.exists(eval_path):
-            with open(eval_path, "r", encoding="utf-8") as f:
-                lines = f.readlines()
-
-            data = []
-            for line in lines:
-                parts = line.strip().split()
-                # skip separators
-                if not parts or parts[0].startswith("="):
-                    continue
-                # lines with intent + metrics
-                if len(parts) >= 4 and not parts[0].isdigit():
-                    try:
-                        intent = parts[0]
-                        prec, rec, f1 = float(parts[1]), float(parts[2]), float(parts[3])
-                        support = int(parts[4]) if len(parts) > 4 and parts[4].isdigit() else "-"
-                        data.append([intent, prec, rec, f1, support])
-                    except Exception:
-                        continue
-
-            if data:
-                df = pd.DataFrame(data, columns=["Intent", "Precision", "Recall", "F1-score", "Support"])
-                st.table(df)
+            found = None
+            for npat, tag, resp in contains_list:
+                if npat and npat in nuser:
+                    found = (tag, resp); break
+            if found:
+                tag, resp = found
+                route = "pattern_contains"
+                bot_text = resp
             else:
-                st.warning("Could not parse evaluation file. Try retraining the model first.")
-        else:
-            st.info("No evaluation report yet — click Retrain model first.")
+                intent, score = predict_intent(user_text)
+                if score < threshold:
+                    intent, score = retrieval_fallback(user_text)
+                bot_text = deterministic_response(intent)
+                route = "ml" if intent != "fallback" else "fallback"
+                log_row(st.session_state.chat_id, user_text, bot_text, route, intent=intent, score=score)
 
+        with st.chat_message("assistant"):
+            st.markdown(f"<div class='bubble bot'>{bot_text}</div>", unsafe_allow_html=True)
+
+        if 'route' in locals() and route.startswith("pattern"):
+            log_row(st.session_state.chat_id, user_text, bot_text, route, intent=tag, score=1.0)
+
+        st.session_state.messages.append({"role":"assistant","content":bot_text})
+
+elif st.session_state.page == "evaluation":
+    st.title("📊 Model Evaluation")
+
+    eval_path = os.path.join(REPORTS_DIR, "eval.txt")
+    if os.path.exists(eval_path):
+        with open(eval_path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+
+        data = []
+        for line in lines:
+            parts = line.strip().split()
+            if not parts or parts[0].startswith("="):
+                continue
+            if len(parts) >= 4:
+                try:
+                    intent = parts[0]
+                    prec, rec, f1 = float(parts[1]), float(parts[2]), float(parts[3])
+                    support = int(parts[4]) if len(parts) > 4 and parts[4].isdigit() else "-"
+                    data.append([intent, prec, rec, f1, support])
+                except Exception:
+                    continue
+
+        if data:
+            df = pd.DataFrame(data, columns=["Intent", "Precision", "Recall", "F1-score", "Support"])
+            st.table(df)
+        else:
+            st.warning("Could not parse evaluation file. Try retraining the model first.")
+    else:
+        st.info("No evaluation report yet — click Retrain model first.")
