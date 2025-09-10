@@ -128,7 +128,6 @@ with st.sidebar:
         new_chat()
         st.rerun()
     retrain = st.button("🔁 Retrain model")
-    threshold = st.slider("Confidence threshold (used only if no pattern match)", 0.0, 1.0, 0.45, 0.01)
 
     st.markdown("---")
     if st.button("💬 Chat"):
@@ -137,6 +136,25 @@ with st.sidebar:
     if st.button("📊 Evaluation"):
         st.session_state.page = "evaluation"
         st.rerun()
+
+    # --- Push threshold & rating to bottom ---
+    st.markdown("### ")
+    st.markdown("### ")  # spacer
+    st.markdown("---")
+
+    threshold = st.slider(
+        "Confidence threshold (used if no pattern match)", 
+        0.0, 1.0, 0.45, 0.01,
+        help="Lower = more answers but less accurate. Higher = fewer answers but more accurate."
+    )
+
+    rating = st.select_slider(
+        "⭐ Rate this chat", 
+        options=[1,2,3,4,5], 
+        value=3
+    )
+    if st.button("Save rating"):
+        st.toast("Thanks for your rating!")
 
 if retrain:
     train_now(DATA_PATH)
