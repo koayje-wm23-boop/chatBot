@@ -201,27 +201,27 @@ with st.sidebar:
             with open(eval_path, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
-            # Parse classification report (simple line split)
             data = []
-            capture = False
             for line in lines:
                 parts = line.strip().split()
-                if len(parts) >= 4 and parts[0] not in ["accuracy", "macro", "weighted", "==="]:
-                    # intent line
-                    intent = parts[0]
-                    prec, rec, f1, support = parts[1:5]
-                    data.append([intent, float(prec), float(rec), float(f1), int(support)])
-                    capture = True
-                elif capture and (parts[0] in ["macro", "weighted"]):
-                    # summary lines
-                    intent = parts[0] + "_avg"
-                    prec, rec, f1 = parts[1:4]
-                    data.append([intent, float(prec), float(rec), float(f1), "-"])
+                # skip separators
+                if not parts or parts[0].startswith("="):
+                    continue
+                # lines with intent + metrics
+                if len(parts) >= 4 and not parts[0].isdigit():
+                    try:
+                        intent = parts[0]
+                        prec, rec, f1 = float(parts[1]), float(parts[2]), float(parts[3])
+                        support = int(parts[4]) if len(parts) > 4 and parts[4].isdigit() else "-"
+                        data.append([intent, prec, rec, f1, support])
+                    except Exception:
+                        continue
 
             if data:
                 df = pd.DataFrame(data, columns=["Intent", "Precision", "Recall", "F1-score", "Support"])
                 st.table(df)
             else:
-                st.warning("No detailed results found in eval.txt")
+                st.warning("Could not parse evaluation file. Try retraining the model first.")
         else:
             st.info("No evaluation report yet — click Retrain model first.")
+
