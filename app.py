@@ -145,7 +145,7 @@ with st.sidebar:
 
     threshold = st.slider(
         "Confidence threshold (used if no pattern match)", 
-        0.0, 1.0, 0.45, 0.01,
+        0.0, 1.0, 0.45, 0.01, 0.3
         help="Lower = more answers but less accurate. Higher = fewer answers but more accurate."
     )
 
