@@ -1,24 +1,6 @@
 {
   "intents": [
     {
-      "tag": "greeting",
-      "patterns": ["hi", "hello", "hey", "good morning", "good afternoon", "is anyone there?"],
-      "responses": ["Hello! 👋 I’m UniHelp. How can I support you today?"]
-    },
-    {
-      "tag": "goodbye",
-      "patterns": ["bye", "goodbye", "see you later", "talk to you soon"],
-      "responses": ["Goodbye! 👋 Have a great day.", "See you later — good luck with your studies!"]
-    },
-    {
-      "tag": "thanks",
-      "patterns": ["thanks", "thank you", "thx", "appreciate it"],
-      "responses": ["You’re most welcome!", "Glad I could help!"]
-    },
-
-    {
-  "intents": [
-    {
       "tag": "admissions",
       "patterns": [
         "How do I apply?",
