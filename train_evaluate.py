@@ -1,7 +1,11 @@
 import json
 import os
+import re
 import numpy as np
 import pandas as pd
+import nltk
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras.preprocessing.text import Tokenizer
@@ -11,6 +15,26 @@ from tensorflow.keras.layers import Embedding, Dense, GlobalAveragePooling1D
 from tensorflow.keras.utils import to_categorical
 import joblib
 
+# ---------------- Preprocessing setup ----------------
+nltk.download("punkt")
+nltk.download("stopwords")
+nltk.download("wordnet")
+
+stop_words = set(stopwords.words("english"))
+lemmatizer = WordNetLemmatizer()
+
+def preprocess_text(text):
+    # Lowercase
+    text = text.lower()
+    # Remove non-alphabetic characters
+    text = re.sub(r"[^a-z\s]", "", text)
+    # Tokenize
+    tokens = nltk.word_tokenize(text)
+    # Remove stopwords + lemmatize
+    tokens = [lemmatizer.lemmatize(w) for w in tokens if w not in stop_words]
+    return " ".join(tokens)
+
+# ---------------- Main training ----------------
 def main(data_path="data/intents_university.json", model_dir="models_dl", reports_dir="reports"):
     os.makedirs(model_dir, exist_ok=True)
     os.makedirs(reports_dir, exist_ok=True)
@@ -27,7 +51,8 @@ def main(data_path="data/intents_university.json", model_dir="models_dl", report
         if responses:
             label_to_responses[tag] = responses
         for pattern in intent.get("patterns", []):
-            texts.append(pattern)
+            cleaned = preprocess_text(pattern)  # <--- preprocess here
+            texts.append(cleaned)
             labels.append(tag)
 
     # --- Encode labels ---
