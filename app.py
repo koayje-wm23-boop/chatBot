@@ -1,82 +1,167 @@
 import streamlit as st
 import os, json, datetime, uuid
 import joblib
-import numpy as np
 import pandas as pd
-from tensorflow.keras.models import load_model
-from keras_preprocessing.sequence import pad_sequences
+from sklearn.metrics.pairwise import cosine_similarity
 import plotly.express as px
 
 # ---------------- Basic setup ----------------
 st.set_page_config(page_title="🎓 UniHelp", page_icon="🎓", layout="centered")
 
 MODEL_DIR   = "models"
-DL_MODEL_DIR= "models_dl"
 DATA_PATH   = "data/intents_university.json"
 REPORTS_DIR = "reports"
 LOG_DIR     = "logs"
+CHAT_CSV    = os.path.join(LOG_DIR, "chat_logs.csv")
 
 os.makedirs(LOG_DIR, exist_ok=True)
 os.makedirs(REPORTS_DIR, exist_ok=True)
 
-# ---------------- Load ML Artifacts ----------------
+# ---------------- Logging ----------------
+def ensure_chat_csv():
+    if not os.path.exists(CHAT_CSV):
+        pd.DataFrame(columns=["timestamp","chat_id","user","bot","route","intent","score"]).to_csv(CHAT_CSV, index=False)
+
+def log_row(chat_id, user, bot, route, intent=None, score=None):
+    ensure_chat_csv()
+    ts = datetime.datetime.now().isoformat(timespec="seconds")
+    pd.DataFrame([{
+        "timestamp": ts, "chat_id": chat_id, "user": user,
+        "bot": bot, "route": route, "intent": intent, "score": score
+    }]).to_csv(CHAT_CSV, mode="a", header=False, index=False)
+
+# ---------------- Load & train ----------------
 @st.cache_resource
-def load_ml_artifacts():
+def load_artifacts():
     model = joblib.load(os.path.join(MODEL_DIR, "intent_model.joblib"))
     label_to_responses = joblib.load(os.path.join(MODEL_DIR, "label_to_responses.joblib"))
     vectorizer = model.named_steps["tfidf"]
     return model, vectorizer, label_to_responses
 
-# ---------------- Load DL Artifacts (Safe) ----------------
-@st.cache_resource
-def try_load_dl():
-    try:
-        model = load_model(os.path.join(DL_MODEL_DIR, "dl_intent_model.h5"))
-        tokenizer = joblib.load(os.path.join(DL_MODEL_DIR, "tokenizer.joblib"))
-        le = joblib.load(os.path.join(DL_MODEL_DIR, "label_encoder.joblib"))
-        label_to_responses = joblib.load(os.path.join(DL_MODEL_DIR, "label_to_responses.joblib"))
-        return model, tokenizer, le, label_to_responses
-    except Exception as e:
-        st.warning(f"⚠️ DL model not available. Fallback only to ML. ({e})")
-        return None, None, None, None
+def artifacts_exist():
+    need = [os.path.join(MODEL_DIR, "intent_model.joblib"),
+            os.path.join(MODEL_DIR, "label_to_responses.joblib")]
+    return all(os.path.exists(p) for p in need)
 
-# ---------------- Predictors ----------------
-def predict_ml(text, model, vectorizer):
+def train_now(data_path=DATA_PATH):
+    from train_evaluate import main as train_main
+    with st.spinner("Training model…"):
+        os.makedirs(MODEL_DIR, exist_ok=True)
+        train_main(data_path, MODEL_DIR, REPORTS_DIR)
+    st.cache_resource.clear()
+    st.success("Training complete.")
+
+# ---------------- Load JSON ----------------
+def load_intents_json(path=DATA_PATH):
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+def norm(s: str) -> str:
+    return " ".join(s.lower().strip().split())
+
+def build_pattern_index(intents_json):
+    exact_map = {}
+    contains_list = []
+    patterns = []
+    p2l = {}
+    for it in intents_json["intents"]:
+        tag = it["tag"]
+        responses = it.get("responses", [])
+        if not responses:
+            continue
+        resp = responses[0]  # deterministic
+        for p in it.get("patterns", []):
+            np = norm(p)
+            exact_map[np] = (tag, resp)
+            contains_list.append((np, tag, resp))
+            patterns.append(p)
+            p2l[p] = tag
+    return exact_map, contains_list, patterns, p2l
+
+# ---------- Start-up ----------
+if not artifacts_exist():
+    train_now(DATA_PATH)
+
+model, vectorizer, label_to_responses = load_artifacts()
+intents_json = load_intents_json()
+exact_map, contains_list, patterns, pattern_to_label = build_pattern_index(intents_json)
+
+# ---------------- Inference utils ----------------
+def predict_intent(text):
     probs = model.predict_proba([text])[0]
     labels = model.classes_
     j = probs.argmax()
     return labels[j], float(probs[j])
 
-def predict_dl(text, model, tokenizer, le, maxlen=20):
-    seq = tokenizer.texts_to_sequences([text])
-    X = pad_sequences(seq, maxlen=maxlen, padding="post")
-    probs = model.predict(X, verbose=0)[0]
-    idx = np.argmax(probs)
-    return le.classes_[idx], float(probs[idx])
+def retrieval_fallback(text, min_sim=0.12):
+    try:
+        X = vectorizer.transform([text])
+        P = vectorizer.transform(patterns)
+        sims = cosine_similarity(X, P)[0]
+        j = sims.argmax()
+        if sims[j] >= min_sim:
+            return pattern_to_label[patterns[j]], float(sims[j])
+    except Exception:
+        pass
+    return "fallback", 0.0
 
-# ---------------- UI State ----------------
-if "messages" not in st.session_state:
+def deterministic_response(intent: str) -> str:
+    for it in intents_json["intents"]:
+        if it["tag"] == intent and it.get("responses"):
+            return it["responses"][0]
+    return label_to_responses.get("fallback", ["I'm not sure."])[0]
+
+# ---------------- Sidebar ----------------
+def new_chat():
+    st.session_state.chat_id = str(uuid.uuid4())[:8]
     st.session_state.messages = [
-        {"role":"assistant","content":"Hi! You can ask about TAR UMT admissions, programs, fees, scholarships, hostel, or library."}
+        {"role":"assistant","content":"Hi! Ask about TAR UMT admissions, programs, tuition, scholarships, library, housing, or contacts."}
     ]
+if "chat_id" not in st.session_state:
+    new_chat()
 
 if "page" not in st.session_state:
     st.session_state.page = "chat"
 
-# ---------------- Sidebar ----------------
 with st.sidebar:
     st.header("UniHelp")
     if st.button("➕ New Chat"):
-        st.session_state.messages = [
-            {"role":"assistant","content":"Hi! You can ask about TAR UMT admissions, programs, fees, scholarships, hostel, or library."}
-        ]
+        new_chat()
         st.rerun()
-
-    if st.button("💬 Chat"): st.session_state.page = "chat"; st.rerun()
-    if st.button("📊 Evaluation"): st.session_state.page = "evaluation"; st.rerun()
+    retrain = st.button("🔁 Retrain model")
 
     st.markdown("---")
-    threshold = st.slider("Confidence threshold", 0.0, 1.0, 0.3, 0.01)
+    if st.button("💬 Chat"):
+        st.session_state.page = "chat"
+        st.rerun()
+    if st.button("📊 Evaluation"):
+        st.session_state.page = "evaluation"
+        st.rerun()
+
+    # --- Bottom section ---
+    st.markdown("### ")
+    st.markdown("### ")
+    st.markdown("---")
+
+    threshold = st.slider(
+        "Confidence threshold (used if no pattern match)", 
+        0.0, 1.0, 0.45, 0.01,
+        help="Lower = more answers but less accurate. Higher = fewer answers but more accurate."
+    )
+
+    rating = st.select_slider(
+        "⭐ Rate this chat", 
+        options=[1,2,3,4,5], 
+        value=3
+    )
+    if st.button("Save rating"):
+        st.toast("Thanks for your rating!")
+
+if retrain:
+    train_now(DATA_PATH)
+    intents_json = load_intents_json()
+    exact_map, contains_list, patterns, pattern_to_label = build_pattern_index(intents_json)
+    st.rerun()
 
 # ---------------- Styling ----------------
 st.markdown("""
@@ -85,71 +170,183 @@ section.main > div { max-width: 850px; margin: auto; }
 .bubble { border-radius: 14px; padding: 10px 14px; margin: 6px 0; }
 .user { background: #0e1117; border: 1px solid #2b2b2b; }
 .bot  { background: #161a23; border: 1px solid #2b2b2b; }
+button[kind="secondary"] {
+    border-radius: 20px !important;
+    padding: 8px 16px;
+    font-size: 15px;
+    font-weight: 500;
+}
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------- Chat Page ----------------
+# ---------------- Page content ----------------
 if st.session_state.page == "chat":
-    st.markdown("<h1 style='text-align:center'>🎓 UniHelp</h1>", unsafe_allow_html=True)
+    # Header
+    st.markdown("""
+    <div style="text-align:center; padding: 10px;">
+      <h1 style="color:#f5f5f5; font-size: 38px;">🎓 UniHelp</h1>
+      <p style="color: #bbbbbb; font-size:18px;">TAR UMT Virtual Assistant — Ask me about admissions, tuition, scholarships, library, housing, or student life.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    # Quick Buttons
+    # --- Quick Access Buttons (2 rows) ---
     faq_map = {
-        "Programs": "What programs are offered?",
-        "Fees": "How much is the tuition fee?",
-        "Scholarships": "What scholarships are available?",
-        "Hostel": "How do I apply for housing?",
-        "Library": "What are the library hours?",
-        "Contact": "How do I contact TAR UMT?"
+        "🎓 Programs": "What programs are offered?",
+        "💰 Fees": "How much is the tuition fee?",
+        "🎓 Scholarships": "What scholarships are available?",
+        "🏠 Hostel": "How do I apply for housing?",
+        "📚 Library": "What are the library hours?",
+        "☎️ Contact": "How do I contact TAR UMT?"
     }
-    cols1, cols2, cols3 = st.columns(3)
-    for i, label in enumerate(faq_map.keys()):
-        if (i < 3 and cols1.button(label)) or (i >= 3 and (cols2 if i<6 else cols3).button(label)):
-            st.session_state.messages.append({"role":"user","content":faq_map[label]})
+
+    labels = list(faq_map.keys())
+    queries = list(faq_map.values())
+
+    # First row
+    cols1 = st.columns(3, gap="medium")
+    for i in range(3):
+        if cols1[i].button(labels[i], use_container_width=True):
+            q = queries[i]
+            st.session_state.messages.append({"role": "user", "content": q})
+            nuser = norm(q)
+            if nuser in exact_map:
+                tag, resp = exact_map[nuser]
+                bot_text = resp
+            else:
+                found = None
+                for npat, tag, resp in contains_list:
+                    if npat and npat in nuser:
+                        found = (tag, resp); break
+                if found:
+                    tag, resp = found
+                    bot_text = resp
+                else:
+                    intent, score = predict_intent(q)
+                    if score < threshold:
+                        intent, score = retrieval_fallback(q)
+                    bot_text = deterministic_response(intent)
+            st.session_state.messages.append({"role": "assistant", "content": bot_text})
             st.rerun()
 
-    # Display history
-    for m in st.session_state.messages:
+    # Second row
+    cols2 = st.columns(3, gap="medium")
+    for i in range(3, 6):
+        if cols2[i-3].button(labels[i], use_container_width=True):
+            q = queries[i]
+            st.session_state.messages.append({"role": "user", "content": q})
+            nuser = norm(q)
+            if nuser in exact_map:
+                tag, resp = exact_map[nuser]
+                bot_text = resp
+            else:
+                found = None
+                for npat, tag, resp in contains_list:
+                    if npat and npat in nuser:
+                        found = (tag, resp); break
+                if found:
+                    tag, resp = found
+                    bot_text = resp
+                else:
+                    intent, score = predict_intent(q)
+                    if score < threshold:
+                        intent, score = retrieval_fallback(q)
+                    bot_text = deterministic_response(intent)
+            st.session_state.messages.append({"role": "assistant", "content": bot_text})
+            st.rerun()
+
+    # --- Chat Messages ---
+    for m in st.session_state.get("messages", []):
         with st.chat_message(m["role"]):
-            cls = "bot" if m["role"]=="assistant" else "user"
+            cls = "bot" if m["role"] == "assistant" else "user"
             st.markdown(f"<div class='bubble {cls}'>{m['content']}</div>", unsafe_allow_html=True)
 
-    # Input
+    # --- User input ---
     user_text = st.chat_input("Type your message…")
     if user_text:
-        st.session_state.messages.append({"role":"user","content":user_text})
+        st.session_state.messages.append({"role": "user", "content": user_text})
+        with st.chat_message("user"):
+            st.markdown(f"<div class='bubble user'>{user_text}</div>", unsafe_allow_html=True)
 
-        # Load models
-        ml_model, vectorizer, ml_responses = load_ml_artifacts()
-        dl_model, tokenizer, le, dl_responses = try_load_dl()
-
-        # ML prediction
-        ml_intent, ml_score = predict_ml(user_text, ml_model, vectorizer)
-        ml_answer = ml_responses.get(ml_intent, ["I'm not sure."])[0] if ml_score >= threshold else "Sorry (ML) not confident."
-
-        # DL prediction
-        if dl_model:
-            dl_intent, dl_score = predict_dl(user_text, dl_model, tokenizer, le)
-            dl_answer = dl_responses.get(dl_intent, ["I'm not sure."])[0] if dl_score >= threshold else "Sorry (DL) not confident."
+        nuser = norm(user_text)
+        if nuser in exact_map:
+            tag, resp = exact_map[nuser]
+            bot_text = resp
         else:
-            dl_answer = "⚠️ DL model unavailable."
+            found = None
+            for npat, tag, resp in contains_list:
+                if npat and npat in nuser:
+                    found = (tag, resp); break
+            if found:
+                tag, resp = found
+                bot_text = resp
+            else:
+                intent, score = predict_intent(user_text)
+                if score < threshold:
+                    intent, score = retrieval_fallback(user_text)
+                bot_text = deterministic_response(intent)
+                log_row(st.session_state.chat_id, user_text, bot_text, "ml", intent=intent, score=score)
 
-        # Show both
-        st.session_state.messages.append({"role":"assistant","content":f"🤖 **ML:** {ml_answer}"})
-        st.session_state.messages.append({"role":"assistant","content":f"🧠 **DL:** {dl_answer}"})
-        st.rerun()
+        with st.chat_message("assistant"):
+            st.markdown(f"<div class='bubble bot'>{bot_text}</div>", unsafe_allow_html=True)
 
-# ---------------- Evaluation Page ----------------
+        st.session_state.messages.append({"role": "assistant", "content": bot_text})
+
 elif st.session_state.page == "evaluation":
     st.title("📊 Model Evaluation")
 
-    # ML evaluation
     eval_path = os.path.join(REPORTS_DIR, "eval.txt")
     if os.path.exists(eval_path):
-        st.subheader("ML (TF-IDF) Evaluation")
-        st.text(open(eval_path).read())
+        with open(eval_path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
 
-    # DL evaluation
-    eval_dl_path = os.path.join(REPORTS_DIR, "eval_dl.txt")
-    if os.path.exists(eval_dl_path):
-        st.subheader("DL (Neural Net) Evaluation")
-        st.text(open(eval_dl_path).read())
+        data = []
+        for line in lines:
+            parts = line.strip().split()
+            if not parts or parts[0].startswith("="):
+                continue
+            if len(parts) >= 4:
+                try:
+                    intent = parts[0]
+                    prec, rec, f1 = float(parts[1]), float(parts[2]), float(parts[3])
+                    support = int(parts[4]) if len(parts) > 4 and parts[4].isdigit() else "-"
+                    data.append([intent, prec, rec, f1, support])
+                except Exception:
+                    continue
+
+        if data:
+            df = pd.DataFrame(data, columns=["Intent", "Precision", "Recall", "F1-score", "Support"])
+            st.dataframe(df, use_container_width=True)
+
+            # ---- Graphs ----
+            st.markdown("### 📊 Intent-wise Performance")
+            fig_f1 = px.bar(df[df["Intent"] != "weighted_avg"],
+                            x="Intent", y="F1-score",
+                            color="F1-score", text="F1-score",
+                            range_y=[0,1])
+            st.plotly_chart(fig_f1, use_container_width=True)
+
+            col1, col2 = st.columns(2)
+            with col1:
+                fig_prec = px.bar(df[df["Intent"] != "weighted_avg"],
+                                  x="Intent", y="Precision",
+                                  color="Precision", text="Precision",
+                                  range_y=[0,1])
+                st.plotly_chart(fig_prec, use_container_width=True)
+            with col2:
+                fig_rec = px.bar(df[df["Intent"] != "weighted_avg"],
+                                 x="Intent", y="Recall",
+                                 color="Recall", text="Recall",
+                                 range_y=[0,1])
+                st.plotly_chart(fig_rec, use_container_width=True)
+
+            if "Support" in df.columns:
+                st.markdown("### 📊 Training Data Distribution")
+                fig_pie = px.pie(df[df["Intent"] != "weighted_avg"],
+                                 names="Intent", values="Support",
+                                 title="Training Samples per Intent")
+                st.plotly_chart(fig_pie, use_container_width=True)
+
+        else:
+            st.warning("Could not parse evaluation file. Try retraining the model first.")
+    else:
+        st.info("No evaluation report yet — click Retrain model first.")
