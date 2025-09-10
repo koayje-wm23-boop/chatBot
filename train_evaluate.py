@@ -1,11 +1,7 @@
 import json
 import os
-import re
 import numpy as np
 import pandas as pd
-import nltk
-from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras.preprocessing.text import Tokenizer
@@ -15,29 +11,7 @@ from tensorflow.keras.layers import Embedding, Dense, GlobalAveragePooling1D
 from tensorflow.keras.utils import to_categorical
 import joblib
 
-# ---------------- Preprocessing setup ----------------
-nltk.download("stopwords")
-nltk.download("wordnet")
-
-stop_words = set(stopwords.words("english"))
-lemmatizer = WordNetLemmatizer()
-
-def preprocess_text(text: str) -> str:
-    text = text.lower()
-    text = re.sub(r"[^a-z\s]", "", text)
-    tokens = text.split()
-    processed = []
-    for w in tokens:
-        if w not in stop_words:
-            lemma = lemmatizer.lemmatize(w)
-            processed.append(lemma)
-            if lemma != w:   # keep plural too
-                processed.append(w)
-    # ✅ Sort & deduplicate
-    return " ".join(sorted(set(processed)))
-
-# ---------------- Main training ----------------
-def main(data_path="data/intents_university.json", model_dir="models", reports_dir="reports"):
+def main(data_path="data/intents_university.json", model_dir="models_dl", reports_dir="reports"):
     os.makedirs(model_dir, exist_ok=True)
     os.makedirs(reports_dir, exist_ok=True)
 
@@ -53,8 +27,7 @@ def main(data_path="data/intents_university.json", model_dir="models", reports_d
         if responses:
             label_to_responses[tag] = responses
         for pattern in intent.get("patterns", []):
-            cleaned = preprocess_text(pattern)  # <--- preprocess here
-            texts.append(cleaned)
+            texts.append(pattern)
             labels.append(tag)
 
     # --- Encode labels ---
@@ -88,7 +61,7 @@ def main(data_path="data/intents_university.json", model_dir="models", reports_d
 
     # --- Evaluate ---
     loss, acc = model.evaluate(X_test, y_test, verbose=0)
-    with open(os.path.join(reports_dir, "eval.txt"), "w") as f:
+    with open(os.path.join(reports_dir, "eval_dl.txt"), "w") as f:
         f.write(f"Deep Learning Model Accuracy: {acc:.3f}, Loss: {loss:.3f}\n")
 
     # --- Save artifacts ---
