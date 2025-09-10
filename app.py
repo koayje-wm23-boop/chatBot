@@ -9,7 +9,6 @@ from sklearn.metrics.pairwise import cosine_similarity
 import plotly.express as px
 
 # ---------------- NLTK preprocessing ----------------
-nltk.download("punkt")
 nltk.download("stopwords")
 nltk.download("wordnet")
 
@@ -19,7 +18,7 @@ lemmatizer = WordNetLemmatizer()
 def preprocess_text(text: str) -> str:
     text = text.lower()
     text = re.sub(r"[^a-z\s]", "", text)
-    tokens = nltk.word_tokenize(text)
+    tokens = text.split()  # lightweight tokenizer
     tokens = [lemmatizer.lemmatize(w) for w in tokens if w not in stop_words]
     return " ".join(tokens)
 
