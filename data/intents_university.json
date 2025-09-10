@@ -17,140 +17,154 @@
     },
 
     {
-      "tag": "entry_requirements",
-      "patterns": ["what are the entry requirements", "how can i apply", "entry requirements", "eligibility for entry", "do i qualify to entry"],
-      "responses": ["To apply, you’ll need: completed application form, official transcripts, minimum GPA 2.5 (UG) / 3.0 (PG), and English proficiency (IELTS/TOEFL)."]
-    },
+  "intents": [
     {
-      "tag": "application_deadlines",
-      "patterns": ["when is the application deadline", "last date to apply", "closing date for applications", "deadline for fall intake"],
-      "responses": ["Deadlines: Fall intake July 30 • Spring intake Dec 15 • International students apply 1 month earlier."]
+      "tag": "admissions",
+      "patterns": [
+        "How do I apply?",
+        "Admissions process",
+        "Entry requirements",
+        "How to join the university",
+        "Application steps"
+      ],
+      "responses": [
+        "For TAR UMT, you can apply online via the Admissions Portal. Entry requirements vary by programme and may include academic results, MUET, portfolios, or interviews. More info: https://www.tarc.edu.my/admissions/"
+      ]
     },
-
     {
       "tag": "programs_offered",
-      "patterns": ["what programs are offered", "available programs", "available courses", "majors list", "degree programs", "what courses do you have"],
-      "responses": ["Programs include Engineering, Business, Computer Science/IT, Law & Humanities, Medicine & Health Sciences."]
+      "patterns": [
+        "What programs are offered?",
+        "List of courses available",
+        "Programs at TAR UMT",
+        "What faculties are there?",
+        "Study options"
+      ],
+      "responses": [
+        "TAR UMT offers Pre-University, Diploma, Undergraduate, and Postgraduate programmes across faculties such as Engineering, Business, Computing & IT, Built Environment, Communication, Creative Arts, Hospitality, and Social Science. For the full list, visit https://www.tarc.edu.my/"
+      ]
     },
-    {
-      "tag": "course_advice",
-      "patterns": ["which courses should i take for ai", "recommend subjects for data science", "best classes for web development", "what should i study for cybersecurity", "electives suggestion"],
-      "responses": ["AI/Data: Python, ML, Statistics, Data Mining • Web: Web Programming, Software Engineering, Cloud • Cyber: Networks, OS, Cryptography."]
-    },
-
     {
       "tag": "tuition_fees",
-      "patterns": ["how much is tuition", "tuition fees", "fees per semester", "cost of study", "how much do i pay"],
-      "responses": ["Per semester (approx): Local $2,500–$3,200 • International $3,800–$4,800 — varies by faculty and credits."]
+      "patterns": [
+        "How much is the tuition fee?",
+        "Course fees",
+        "How much does it cost?",
+        "Tuition at TAR UMT",
+        "Programme cost"
+      ],
+      "responses": [
+        "Tuition fees vary by programme and level of study. As a guideline, diploma and degree fees at TAR UMT are very affordable compared to other private institutions in Malaysia. For the latest breakdown, check: https://www.tarc.edu.my/admissions/"
+      ]
     },
-    {
-      "tag": "payment_methods",
-      "patterns": ["how do i pay fees", "payment options", "can i pay online", "installments for tuition", "fees"],
-      "responses": ["Payment options: online banking/credit card, counter service, FPX. Installments available for selected programs via Finance Office."]
-    },
-
     {
       "tag": "scholarships",
-      "patterns": ["scholarship", "scholarships", "scholarships available", "any bursary", "financial aid", "how to get scholarship", "am i eligible for scholarship", "scholarship requirements", "apply for scholarship"],
-      "responses": ["Yes! We offer merit, need-based, and sports scholarships. Typical requirement: GPA ≥3.2 plus a short statement. Apply via the Funding Portal."]
+      "patterns": [
+        "Scholarships available?",
+        "Does TAR UMT offer financial aid?",
+        "What scholarships do you have?",
+        "Fee waivers",
+        "Student financial support"
+      ],
+      "responses": [
+        "Yes! TAR UMT offers scholarships such as the TARC–TAA Scholarships, merit awards, and need-based bursaries. For details and eligibility criteria, visit: https://www.tarc.edu.my/admissions/scholarships-financial-aid/"
+      ]
     },
     {
-      "tag": "scholarship_deadlines",
-      "patterns": ["scholarship deadline", "when to apply for scholarship", "scholarship closing date"],
-      "responses": ["Scholarship windows: Main round Jun 1–Jul 15 • Second round Dec 1–Dec 20. Submit early for best chance."]
-    },
-
-    {
-      "tag": "library_hours",
-      "patterns": ["when is the library open", "library hours", "library timings", "what time does the library close"],
-      "responses": ["Library: Mon–Fri 8am–9pm • Sat 9am–5pm • Sun closed (extended to 11pm during exams)."]
-    },
-    {
-      "tag": "library_services",
-      "patterns": ["can i borrow books", "library membership", "how many books can i borrow", "library fines"],
-      "responses": ["Borrow up to 6 books for 2 weeks • Late fee $0.20/day • E-resources via the Library Portal."]
-    },
-
-    {
-      "tag": "campus_location",
-      "patterns": ["where is the university located", "campus address", "how to get to campus", "map of campus"],
-      "responses": ["Main Campus: 123 University Avenue • Buses 15 & 27 • Nearest train: Central Station • Campus map in Student Portal."]
+      "tag": "campuses",
+      "patterns": [
+        "Where are the campuses located?",
+        "TAR UMT branches",
+        "Campus locations",
+        "Main campus",
+        "Branch campuses"
+      ],
+      "responses": [
+        "TAR UMT has its Main Campus in Kuala Lumpur and branch campuses in Penang, Perak, Johor, Pahang, and Sabah."
+      ]
     },
     {
-      "tag": "transport",
-      "patterns": ["bus to campus", "how to reach campus", "shuttle timings", "is there a campus bus", "public transport"],
-      "responses": ["Shuttle every 20 minutes (7:00–22:00) from Central Station • Public buses stop at University Gate."]
-    },
-
-    {
-      "tag": "hostel_booking",
-      "patterns": ["how to book hostel", "accommodation on campus", "dorm rooms", "hostel application"],
-      "responses": ["Book via Student Portal → Housing. Singles and doubles available. Allocation is first-come, first-served."]
-    },
-    {
-      "tag": "hostel_rules",
-      "patterns": ["hostel rules", "curfew in hostel", "guest policy hostel"],
-      "responses": ["Hostel rules: quiet hours 10pm–7am, guests until 9pm, no smoking/alcohol. See Housing Handbook for full policy."]
-    },
-
-    {
-      "tag": "contact_info",
-      "patterns": ["contact number", "email for admissions", "how to contact the university", "who can i talk to"],
-      "responses": ["Admissions: admissions@uni.edu, +60-12-345-6789 • General help: help@uni.edu • Office: Building A, Room 101."]
-    },
-
-    {
-      "tag": "reset_password",
-      "patterns": ["i forgot my password", "how to reset portal password", "reset login", "can't login to portal"],
-      "responses": ["Reset: portal.uni.edu → Forgot Password → enter student email → click the reset link • If no email, contact help@uni.edu."]
+      "tag": "library",
+      "patterns": [
+        "Library opening hours",
+        "When is the library open?",
+        "Library facilities",
+        "Study in the library",
+        "Library info"
+      ],
+      "responses": [
+        "The Main Library at TAR UMT KL Campus is open on weekdays and Saturdays, with extended hours during exam periods. Facilities include study spaces, online resources, and book lending. Please check the Library’s official page for exact hours: https://web.tarc.edu.my/library/"
+      ]
     },
     {
-      "tag": "technical_support",
-      "patterns": ["wifi not working", "portal error", "can't login", "moodle problem", "email not syncing"],
-      "responses": ["Try: reset Wi-Fi profile, clear browser cache, or another browser. If it persists, email it-support@uni.edu."]
+      "tag": "housing",
+      "patterns": [
+        "How do I apply for housing?",
+        "On-campus hostel",
+        "Student hostel",
+        "Accommodation",
+        "Dormitory"
+      ],
+      "responses": [
+        "TAR UMT provides hostel accommodation at its main and selected branch campuses. Students can apply during admission or through the Student Affairs Department. More info: https://www.tarc.edu.my/student-affairs/hostel-accommodation/"
+      ]
     },
-
     {
-      "tag": "events",
-      "patterns": ["what events are happening", "upcoming events", "campus activities", "club fair"],
-      "responses": ["Upcoming: Career Fair (Sept 15) • International Student Day (Oct 5) • Hackathon (Nov 20)."]
+      "tag": "contacts",
+      "patterns": [
+        "How do I contact TAR UMT?",
+        "Contact info",
+        "Phone number",
+        "Email address",
+        "Office address"
+      ],
+      "responses": [
+        "You can contact TAR UMT at: \n📍 Main Campus: Jalan Genting Kelang, Setapak, 53300 Kuala Lumpur, Malaysia.\n📞 +603-41450123\n🌐 Visit https://www.tarc.edu.my/contact-us/ for more contacts."
+      ]
+    },
+    {
+      "tag": "about",
+      "patterns": [
+        "Tell me about TAR UMT",
+        "History of TAR UMT",
+        "When was TAR UC established?",
+        "About the university"
+      ],
+      "responses": [
+        "TAR UMT, established in 1969 as TAR College and upgraded in 2013 as TAR University College, became Tunku Abdul Rahman University of Management and Technology in 2022. It is one of Malaysia’s oldest and most affordable private institutions, with a strong reputation for quality education."
+      ]
     },
     {
       "tag": "exam_schedule",
-      "patterns": ["when are the exams", "exam timetable", "exam schedule", "finals week", "exam"],
-      "responses": ["Exam timetables: Student Portal → Academics → Exam Timetable • Midterms Oct • Finals Dec."]
+      "patterns": [
+        "When are the exams?",
+        "Exam schedule",
+        "Exam dates",
+        "Final exams"
+      ],
+      "responses": [
+        "Exam schedules are released by the Examination Unit each semester. Please check the TAR UMT Academic Calendar or Student Portal for the latest exam dates."
+      ]
     },
     {
-      "tag": "sports_facilities",
-      "patterns": ["sports center", "gym timings", "basketball court", "swimming pool hours"],
-      "responses": ["Sports Complex: 7am–10pm daily • Facilities: gym, pool, basketball, football."]
+      "tag": "orientation",
+      "patterns": [
+        "When is orientation?",
+        "Orientation week",
+        "Freshers orientation",
+        "First week activities"
+      ],
+      "responses": [
+        "Orientation week for new students is usually held before the start of classes each semester. Activities include campus tours, student society showcases, and briefings by faculty. Dates are announced on the TAR UMT website and Student Portal."
+      ]
     },
-    {
-      "tag": "cafeteria",
-      "patterns": ["is the cafeteria open", "canteen hours", "food on campus", "halal food"],
-      "responses": ["Cafeteria: Mon–Sat 7am–8pm • Options: halal, vegetarian, vegan, gluten-free."]
-    },
-    {
-      "tag": "emergency",
-      "patterns": ["emergency number", "who to call in emergency", "security contact", "medical help"],
-      "responses": ["Security (24/7): +1-999-222-333 • Health Center: Building B, Ground Floor."]
-    },
-
-    {
-      "tag": "fees_refund",
-      "patterns": ["refund policy", "can i get a refund", "withdrawal and refund"],
-      "responses": ["Refunds depend on withdrawal date: 100% week 1 • 50% week 2 • No refund after week 3 • See Finance policy."]
-    },
-    {
-      "tag": "id_card",
-      "patterns": ["lost student id", "replace id card", "how to get new student card"],
-      "responses": ["Report loss to Security, then visit Student Services with ID • Replacement fee: $10."]
-    },
-
     {
       "tag": "fallback",
       "patterns": [],
-      "responses": ["Sorry, I didn't catch that. Try asking about entry requirements, fees, scholarships, programs, library, hostel, or contacts."]
+      "responses": [
+        "Sorry, I didn’t quite get that. Could you try asking in another way?",
+        "Hmm, I’m not sure about that. You may check the TAR UMT website for more info: https://www.tarc.edu.my/"
+      ]
     }
   ]
 }
