@@ -1,9 +1,27 @@
 import streamlit as st
-import os, json, datetime, uuid
+import os, json, datetime, uuid, re
 import joblib
 import pandas as pd
+import nltk
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
 from sklearn.metrics.pairwise import cosine_similarity
 import plotly.express as px
+
+# ---------------- NLTK preprocessing ----------------
+nltk.download("punkt")
+nltk.download("stopwords")
+nltk.download("wordnet")
+
+stop_words = set(stopwords.words("english"))
+lemmatizer = WordNetLemmatizer()
+
+def preprocess_text(text: str) -> str:
+    text = text.lower()
+    text = re.sub(r"[^a-z\s]", "", text)
+    tokens = nltk.word_tokenize(text)
+    tokens = [lemmatizer.lemmatize(w) for w in tokens if w not in stop_words]
+    return " ".join(tokens)
 
 # ---------------- Basic setup ----------------
 st.set_page_config(page_title="🎓 UniHelp", page_icon="🎓", layout="centered")
@@ -88,14 +106,16 @@ exact_map, contains_list, patterns, pattern_to_label = build_pattern_index(inten
 
 # ---------------- Inference utils ----------------
 def predict_intent(text):
-    probs = model.predict_proba([text])[0]
+    pre_text = preprocess_text(text)   # <--- preprocess input
+    probs = model.predict_proba([pre_text])[0]
     labels = model.classes_
     j = probs.argmax()
     return labels[j], float(probs[j])
 
 def retrieval_fallback(text, min_sim=0.12):
     try:
-        X = vectorizer.transform([text])
+        pre_text = preprocess_text(text)   # <--- preprocess input
+        X = vectorizer.transform([pre_text])
         P = vectorizer.transform(patterns)
         sims = cosine_similarity(X, P)[0]
         j = sims.argmax()
