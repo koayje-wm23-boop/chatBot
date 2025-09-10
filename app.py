@@ -19,10 +19,27 @@ def preprocess_text(text: str) -> str:
     text = text.lower()
     text = re.sub(r"[^a-z\s]", "", text)
     tokens = text.split()
-    tokens = [lemmatizer.lemmatize(w) for w in tokens if w not in stop_words]
-    # ✅ Sort tokens alphabetically so "program offer" and "offer program" are treated the same
-    tokens = sorted(tokens)
-    return " ".join(tokens)
+    processed = []
+    for w in tokens:
+        if w not in stop_words:
+            lemma = lemmatizer.lemmatize(w)
+            processed.append(lemma)
+            if lemma != w:   # keep plural too
+                processed.append(w)
+    # ✅ Sort & deduplicate
+    return " ".join(sorted(set(processed)))
+
+# ---------------- Keyword override map ----------------
+keyword_map = {
+    "fee": "fees",
+    "fees": "fees",
+    "scholarship": "scholarship",
+    "scholarships": "scholarship",
+    "hostel": "hostel",
+    "program": "programs_offered",
+    "programs": "programs_offered",
+    "about": "about"
+}
 
 # ---------------- Basic setup ----------------
 st.set_page_config(page_title="🎓 UniHelp", page_icon="🎓", layout="centered")
@@ -113,12 +130,17 @@ def predict_intent(text):
     j = probs.argmax()
     return labels[j], float(probs[j])
 
-def retrieval_fallback(text, min_sim=0.1):  # lowered threshold
+def retrieval_fallback(text, min_sim=0.1):
     try:
         pre_text = preprocess_text(text)
         words = pre_text.split()
 
-        # ✅ Special case: one-word queries ("about", "program", "fees", etc.)
+        # ✅ Keyword override
+        for w in words:
+            if w in keyword_map:
+                return keyword_map[w], 1.0
+
+        # ✅ Special case: one-word queries
         if len(words) == 1:
             for npat, tag, resp in contains_list:
                 if words[0] in npat.split():
