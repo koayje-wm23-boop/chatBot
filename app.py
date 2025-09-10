@@ -194,16 +194,19 @@ if st.session_state.page == "chat":
     # Chat container
     st.markdown("<div class='chat-box'>", unsafe_allow_html=True)
 
-    for m in st.session_state.get("messages", []):
-        with st.chat_message(m["role"]):
-            cls = "bot" if m["role"]=="assistant" else "user"
-            st.markdown(f"<div class='bubble {cls}'>{m['content']}</div>", unsafe_allow_html=True)
+    if len(st.session_state.messages) <= 1:
+        # Show placeholder if only welcome message exists
+        st.markdown(
+            "<p style='color:#777; text-align:center; margin-top:150px;'>💬 Start a conversation...</p>",
+            unsafe_allow_html=True
+        )
+    else:
+        for m in st.session_state.get("messages", []):
+            with st.chat_message(m["role"]):
+                cls = "bot" if m["role"]=="assistant" else "user"
+                st.markdown(f"<div class='bubble {cls}'>{m['content']}</div>", unsafe_allow_html=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
-
-    # Empty state
-    if len(st.session_state.messages) == 1:  
-        st.info("✨ Start chatting by asking about admissions, fees, programs, or campus life.")
 
     # Input
     user_text = st.chat_input("Type your message…")
