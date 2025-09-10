@@ -1,76 +1,76 @@
-import json, os, argparse
-from typing import Dict, List, Tuple
+import json
+import os
 import numpy as np
+import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import Pipeline
-from sklearn.metrics import classification_report, precision_recall_fscore_support
+from sklearn.preprocessing import LabelEncoder
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Embedding, Dense, GlobalAveragePooling1D
+from tensorflow.keras.utils import to_categorical
 import joblib
 
-from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
-from rouge_score import rouge_scorer
-
-def load_intents(path: str) -> Dict:
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-def build_xy(intents: Dict) -> Tuple[List[str], List[str]]:
-    X, y = [], []
-    for intent in intents["intents"]:
-        tag = intent["tag"]
-        for p in intent.get("patterns", []):
-            X.append(p)
-            y.append(tag)
-    return X, y
-
-def main(data_path="data/intents_university.json", model_dir="models", reports_dir="reports",
-         test_size=0.25, seed=42):
+def main(data_path="data/intents_university.json", model_dir="models_dl", reports_dir="reports"):
     os.makedirs(model_dir, exist_ok=True)
     os.makedirs(reports_dir, exist_ok=True)
 
-    data = load_intents(data_path)
-    X, y = build_xy(data)
-    label_to_responses = {i["tag"]: i["responses"] for i in data["intents"] if i.get("responses")}
+    # --- Load data ---
+    with open(data_path, "r", encoding="utf-8") as f:
+        intents = json.load(f)["intents"]
 
-    Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=test_size, random_state=seed, stratify=y)
-    pipe = Pipeline([
-        ("tfidf", TfidfVectorizer(lowercase=True, stop_words="english", ngram_range=(1,2))),
-        ("clf", LogisticRegression(max_iter=1000))
+    texts, labels = [], []
+    label_to_responses = {}
+    for intent in intents:
+        tag = intent["tag"]
+        responses = intent.get("responses", [])
+        if responses:
+            label_to_responses[tag] = responses
+        for pattern in intent.get("patterns", []):
+            texts.append(pattern)
+            labels.append(tag)
+
+    # --- Encode labels ---
+    le = LabelEncoder()
+    labels_enc = le.fit_transform(labels)
+    num_classes = len(le.classes_)
+
+    # --- Tokenize text ---
+    tokenizer = Tokenizer(oov_token="<OOV>")
+    tokenizer.fit_on_texts(texts)
+    seqs = tokenizer.texts_to_sequences(texts)
+    maxlen = max(len(s) for s in seqs)
+    X = pad_sequences(seqs, maxlen=maxlen, padding="post")
+    y = to_categorical(labels_enc, num_classes=num_classes)
+
+    # --- Train/test split ---
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # --- Build model ---
+    vocab_size = len(tokenizer.word_index) + 1
+    model = Sequential([
+        Embedding(vocab_size, 64, input_length=maxlen),
+        GlobalAveragePooling1D(),
+        Dense(64, activation="relu"),
+        Dense(num_classes, activation="softmax")
     ])
-    pipe.fit(Xtr, ytr)
-    ypred = pipe.predict(Xte)
+    model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
-    report = classification_report(yte, ypred, digits=3)
-    pr, rc, f1, _ = precision_recall_fscore_support(yte, ypred, average="weighted", zero_division=0)
+    # --- Train ---
+    history = model.fit(X_train, y_train, epochs=30, batch_size=8, validation_data=(X_test, y_test), verbose=0)
 
-    smoothie = SmoothingFunction().method1
-    rouge = rouge_scorer.RougeScorer(['rougeL'], use_stemmer=True)
-    bleu_scores, rougeL_scores = [], []
-    for yt, yp in zip(yte, ypred):
-        ref = (label_to_responses.get(yt, [""]))[0].split()
-        hyp = (label_to_responses.get(yp, [""]))[0].split()
-        bleu_scores.append(sentence_bleu([ref], hyp, smoothing_function=smoothie))
-        rougeL_scores.append(rouge.score(" ".join(ref), " ".join(hyp))["rougeL"].fmeasure)
-    bleu = float(np.mean(bleu_scores)) if bleu_scores else 0.0
-    rougeL = float(np.mean(rougeL_scores)) if rougeL_scores else 0.0
+    # --- Evaluate ---
+    loss, acc = model.evaluate(X_test, y_test, verbose=0)
+    with open(os.path.join(reports_dir, "eval_dl.txt"), "w") as f:
+        f.write(f"Deep Learning Model Accuracy: {acc:.3f}, Loss: {loss:.3f}\n")
 
-    joblib.dump(pipe, os.path.join(model_dir, "intent_model.joblib"))
+    # --- Save artifacts ---
+    model.save(os.path.join(model_dir, "dl_intent_model.h5"))
+    joblib.dump(tokenizer, os.path.join(model_dir, "tokenizer.joblib"))
+    joblib.dump(le, os.path.join(model_dir, "label_encoder.joblib"))
     joblib.dump(label_to_responses, os.path.join(model_dir, "label_to_responses.joblib"))
 
-    with open(os.path.join(reports_dir, "eval.txt"), "w", encoding="utf-8") as f:
-        f.write("=== Intent Classification ===\n")
-        f.write(report + "\n")
-        f.write(f"Weighted Precision: {pr:.3f} | Recall: {rc:.3f} | F1: {f1:.3f}\n\n")
-        f.write("=== Response Generation (templated baseline) ===\n")
-        f.write(f"BLEU: {bleu:.3f} | ROUGE-L: {rougeL:.3f}\n")
-
-    print("Training complete.")
+    print("✅ Deep Learning model trained and saved!")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--data", default="data/intents_university.json")
-    parser.add_argument("--model_dir", default="models")
-    parser.add_argument("--reports_dir", default="reports")
-    args = parser.parse_args()
-    main(args.data, args.model_dir, args.reports_dir)
+    main()
