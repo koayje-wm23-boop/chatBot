@@ -3,6 +3,7 @@ import os, json, datetime, uuid
 import joblib
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
+import plotly.express as px
 
 # ---------------- Basic setup ----------------
 st.set_page_config(page_title="🎓 UniHelp", page_icon="🎓", layout="centered")
@@ -208,7 +209,6 @@ if st.session_state.page == "chat":
             q = queries[i]
             st.session_state.messages.append({"role": "user", "content": q})
             nuser = norm(q)
-
             if nuser in exact_map:
                 tag, resp = exact_map[nuser]
                 bot_text = resp
@@ -225,7 +225,6 @@ if st.session_state.page == "chat":
                     if score < threshold:
                         intent, score = retrieval_fallback(q)
                     bot_text = deterministic_response(intent)
-
             st.session_state.messages.append({"role": "assistant", "content": bot_text})
             st.rerun()
 
@@ -236,7 +235,6 @@ if st.session_state.page == "chat":
             q = queries[i]
             st.session_state.messages.append({"role": "user", "content": q})
             nuser = norm(q)
-
             if nuser in exact_map:
                 tag, resp = exact_map[nuser]
                 bot_text = resp
@@ -253,7 +251,6 @@ if st.session_state.page == "chat":
                     if score < threshold:
                         intent, score = retrieval_fallback(q)
                     bot_text = deterministic_response(intent)
-
             st.session_state.messages.append({"role": "assistant", "content": bot_text})
             st.rerun()
 
@@ -320,15 +317,35 @@ elif st.session_state.page == "evaluation":
             df = pd.DataFrame(data, columns=["Intent", "Precision", "Recall", "F1-score", "Support"])
             st.dataframe(df, use_container_width=True)
 
-            weighted = df[df["Intent"]=="weighted_avg"]
-            if not weighted.empty:
-                p, r, f1 = weighted.iloc[0]["Precision"], weighted.iloc[0]["Recall"], weighted.iloc[0]["F1-score"]
-                st.markdown(f"""
-                <div style="padding:15px; background:#161a23; border-radius:12px; margin-top:15px;">
-                  <h3 style="margin:0; color:#f5f5f5;">📊 Overall Performance</h3>
-                  <p style="margin:0; color:#bbb;">Weighted Precision: <b>{p:.2f}</b> • Recall: <b>{r:.2f}</b> • F1 Score: <b>{f1:.2f}</b></p>
-                </div>
-                """, unsafe_allow_html=True)
+            # ---- Graphs ----
+            st.markdown("### 📊 Intent-wise Performance")
+            fig_f1 = px.bar(df[df["Intent"] != "weighted_avg"],
+                            x="Intent", y="F1-score",
+                            color="F1-score", text="F1-score",
+                            range_y=[0,1])
+            st.plotly_chart(fig_f1, use_container_width=True)
+
+            col1, col2 = st.columns(2)
+            with col1:
+                fig_prec = px.bar(df[df["Intent"] != "weighted_avg"],
+                                  x="Intent", y="Precision",
+                                  color="Precision", text="Precision",
+                                  range_y=[0,1])
+                st.plotly_chart(fig_prec, use_container_width=True)
+            with col2:
+                fig_rec = px.bar(df[df["Intent"] != "weighted_avg"],
+                                 x="Intent", y="Recall",
+                                 color="Recall", text="Recall",
+                                 range_y=[0,1])
+                st.plotly_chart(fig_rec, use_container_width=True)
+
+            if "Support" in df.columns:
+                st.markdown("### 📊 Training Data Distribution")
+                fig_pie = px.pie(df[df["Intent"] != "weighted_avg"],
+                                 names="Intent", values="Support",
+                                 title="Training Samples per Intent")
+                st.plotly_chart(fig_pie, use_container_width=True)
+
         else:
             st.warning("Could not parse evaluation file. Try retraining the model first.")
     else:
