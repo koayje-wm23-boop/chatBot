@@ -169,15 +169,6 @@ section.main > div { max-width: 850px; margin: auto; }
 .bubble { border-radius: 14px; padding: 10px 14px; margin: 6px 0; }
 .user { background: #0e1117; border: 1px solid #2b2b2b; }
 .bot  { background: #161a23; border: 1px solid #2b2b2b; }
-.chat-box {
-  background: #11141c;
-  padding: 20px;
-  border-radius: 16px;
-  min-height: 400px;
-  max-height: 600px;
-  overflow-y: auto;
-  margin-bottom: 10px;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -191,24 +182,51 @@ if st.session_state.page == "chat":
     </div>
     """, unsafe_allow_html=True)
 
-    # Chat container
-    st.markdown("<div class='chat-box'>", unsafe_allow_html=True)
+    # Show chat messages
+    for m in st.session_state.get("messages", []):
+        with st.chat_message(m["role"]):
+            cls = "bot" if m["role"]=="assistant" else "user"
+            st.markdown(f"<div class='bubble {cls}'>{m['content']}</div>", unsafe_allow_html=True)
 
-    if len(st.session_state.messages) <= 1:
-        # Show placeholder if only welcome message exists
-        st.markdown(
-            "<p style='color:#777; text-align:center; margin-top:150px;'>💬 Start a conversation...</p>",
-            unsafe_allow_html=True
-        )
-    else:
-        for m in st.session_state.get("messages", []):
-            with st.chat_message(m["role"]):
-                cls = "bot" if m["role"]=="assistant" else "user"
-                st.markdown(f"<div class='bubble {cls}'>{m['content']}</div>", unsafe_allow_html=True)
+    # --- FAQ Quick Buttons ---
+    st.markdown("### 🔥 Most Asked Questions")
+    faq_questions = [
+        "What programs are offered?",
+        "How much is the tuition fee?",
+        "What scholarships are available?",
+        "Where is the campus located?",
+        "What are the library hours?",
+        "How do I apply for housing?"
+    ]
 
-    st.markdown("</div>", unsafe_allow_html=True)
+    cols = st.columns(2)
+    for i, q in enumerate(faq_questions):
+        if cols[i % 2].button(q):
+            # Simulate user input
+            st.session_state.messages.append({"role":"user","content":q})
+            nuser = norm(q)
 
-    # Input
+            if nuser in exact_map:
+                tag, resp = exact_map[nuser]
+                bot_text = resp
+            else:
+                found = None
+                for npat, tag, resp in contains_list:
+                    if npat and npat in nuser:
+                        found = (tag, resp); break
+                if found:
+                    tag, resp = found
+                    bot_text = resp
+                else:
+                    intent, score = predict_intent(q)
+                    if score < threshold:
+                        intent, score = retrieval_fallback(q)
+                    bot_text = deterministic_response(intent)
+
+            st.session_state.messages.append({"role":"assistant","content":bot_text})
+            st.rerun()
+
+    # --- User input ---
     user_text = st.chat_input("Type your message…")
     if user_text:
         st.session_state.messages.append({"role":"user","content":user_text})
@@ -218,7 +236,6 @@ if st.session_state.page == "chat":
         nuser = norm(user_text)
         if nuser in exact_map:
             tag, resp = exact_map[nuser]
-            route = "pattern_exact"
             bot_text = resp
         else:
             found = None
@@ -227,21 +244,16 @@ if st.session_state.page == "chat":
                     found = (tag, resp); break
             if found:
                 tag, resp = found
-                route = "pattern_contains"
                 bot_text = resp
             else:
                 intent, score = predict_intent(user_text)
                 if score < threshold:
                     intent, score = retrieval_fallback(user_text)
                 bot_text = deterministic_response(intent)
-                route = "ml" if intent != "fallback" else "fallback"
-                log_row(st.session_state.chat_id, user_text, bot_text, route, intent=intent, score=score)
+                log_row(st.session_state.chat_id, user_text, bot_text, "ml", intent=intent, score=score)
 
         with st.chat_message("assistant"):
             st.markdown(f"<div class='bubble bot'>{bot_text}</div>", unsafe_allow_html=True)
-
-        if 'route' in locals() and route.startswith("pattern"):
-            log_row(st.session_state.chat_id, user_text, bot_text, route, intent=tag, score=1.0)
 
         st.session_state.messages.append({"role":"assistant","content":bot_text})
 
