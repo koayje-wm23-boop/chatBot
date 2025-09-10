@@ -307,6 +307,46 @@
         "Hey! 😊 Looking for info about courses, scholarships, or student life?"
       ]
     },
+    {
+      "tag": "farewell",
+      "patterns": [
+        "Bye",
+        "Goodbye",
+        "See you later",
+        "Talk to you later",
+        "Thanks, bye",
+        "Catch you later",
+        "Farewell",
+        "I’m done",
+        "End chat",
+        "Thank you, goodbye"
+      ],
+      "responses": [
+        "Goodbye! 👋 Don’t forget to check the TAR UMT website for the latest updates.",
+        "See you soon! Wishing you success in your studies. 📚",
+        "Bye! Feel free to come back anytime if you need more help."
+      ]
+    },
+    {
+      "tag": "gratitude",
+      "patterns": [
+        "Thanks",
+        "Thank you",
+        "Thanks a lot",
+        "Thanks so much",
+        "Thank you very much",
+        "I appreciate it",
+        "Many thanks",
+        "Thanks for your help",
+        "Thank you chatbot",
+        "Thanks a ton"
+      ],
+      "responses": [
+        "You’re very welcome! 😊",
+        "No problem at all — happy to help! 🎓",
+        "Anytime! Feel free to ask more questions whenever you need."
+      ]
+    },
 
     {
       "tag": "fallback",
