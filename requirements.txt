@@ -7,3 +7,5 @@ langdetect
 plotly
 nltk
 rouge-score
+tensorflow
+keras-preprocessing
