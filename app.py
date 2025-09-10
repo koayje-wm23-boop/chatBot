@@ -124,7 +124,7 @@ exact_map, contains_list, patterns, pattern_to_label = build_pattern_index(inten
 
 # ---------------- Inference utils ----------------
 def predict_intent(text):
-    pre_text = preprocess_text(text)   # <--- preprocess input
+    pre_text = preprocess_text(text)
     probs = model.predict_proba([pre_text])[0]
     labels = model.classes_
     j = probs.argmax()
@@ -135,12 +135,7 @@ def retrieval_fallback(text, min_sim=0.1):
         pre_text = preprocess_text(text)
         words = pre_text.split()
 
-        # ✅ Keyword override
-        for w in words:
-            if w in keyword_map:
-                return keyword_map[w], 1.0
-
-        # ✅ Special case: one-word queries
+        # Special case: one-word queries
         if len(words) == 1:
             for npat, tag, resp in contains_list:
                 if words[0] in npat.split():
@@ -162,6 +157,25 @@ def deterministic_response(intent: str) -> str:
         if it["tag"] == intent and it.get("responses"):
             return it["responses"][0]
     return label_to_responses.get("fallback", ["I'm not sure."])[0]
+
+# ---------------- Master query handler ----------------
+def handle_query(user_text, threshold=0.3):
+    pre_text = preprocess_text(user_text)
+    words = pre_text.split()
+
+    # ✅ Step 1: Direct keyword override FIRST
+    for w in words:
+        if w in keyword_map:
+            return keyword_map[w], 1.0
+
+    # Step 2: Predict with ML
+    intent, score = predict_intent(user_text)
+
+    # Step 3: If below threshold, use retrieval
+    if score < threshold:
+        intent, score = retrieval_fallback(user_text)
+
+    return intent, score
 
 # ---------------- Sidebar ----------------
 def new_chat():
@@ -190,9 +204,6 @@ with st.sidebar:
         st.session_state.page = "evaluation"
         st.rerun()
 
-    # --- Bottom section ---
-    st.markdown("### ")
-    st.markdown("### ")
     st.markdown("---")
 
     threshold = st.slider(
@@ -222,18 +233,11 @@ section.main > div { max-width: 850px; margin: auto; }
 .bubble { border-radius: 14px; padding: 10px 14px; margin: 6px 0; }
 .user { background: #0e1117; border: 1px solid #2b2b2b; }
 .bot  { background: #161a23; border: 1px solid #2b2b2b; }
-button[kind="secondary"] {
-    border-radius: 20px !important;
-    padding: 8px 16px;
-    font-size: 15px;
-    font-weight: 500;
-}
 </style>
 """, unsafe_allow_html=True)
 
 # ---------------- Page content ----------------
 if st.session_state.page == "chat":
-    # Header
     st.markdown("""
     <div style="text-align:center; padding: 10px;">
       <h1 style="color:#f5f5f5; font-size: 38px;">🎓 UniHelp</h1>
@@ -260,23 +264,8 @@ if st.session_state.page == "chat":
         if cols1[i].button(labels[i], use_container_width=True):
             q = queries[i]
             st.session_state.messages.append({"role": "user", "content": q})
-            nuser = norm(q)
-            if nuser in exact_map:
-                tag, resp = exact_map[nuser]
-                bot_text = resp
-            else:
-                found = None
-                for npat, tag, resp in contains_list:
-                    if npat and npat in nuser:
-                        found = (tag, resp); break
-                if found:
-                    tag, resp = found
-                    bot_text = resp
-                else:
-                    intent, score = predict_intent(q)
-                    if score < threshold:
-                        intent, score = retrieval_fallback(q)
-                    bot_text = deterministic_response(intent)
+            intent, score = handle_query(q, threshold)
+            bot_text = deterministic_response(intent)
             st.session_state.messages.append({"role": "assistant", "content": bot_text})
             st.rerun()
 
@@ -286,23 +275,8 @@ if st.session_state.page == "chat":
         if cols2[i-3].button(labels[i], use_container_width=True):
             q = queries[i]
             st.session_state.messages.append({"role": "user", "content": q})
-            nuser = norm(q)
-            if nuser in exact_map:
-                tag, resp = exact_map[nuser]
-                bot_text = resp
-            else:
-                found = None
-                for npat, tag, resp in contains_list:
-                    if npat and npat in nuser:
-                        found = (tag, resp); break
-                if found:
-                    tag, resp = found
-                    bot_text = resp
-                else:
-                    intent, score = predict_intent(q)
-                    if score < threshold:
-                        intent, score = retrieval_fallback(q)
-                    bot_text = deterministic_response(intent)
+            intent, score = handle_query(q, threshold)
+            bot_text = deterministic_response(intent)
             st.session_state.messages.append({"role": "assistant", "content": bot_text})
             st.rerun()
 
@@ -319,24 +293,9 @@ if st.session_state.page == "chat":
         with st.chat_message("user"):
             st.markdown(f"<div class='bubble user'>{user_text}</div>", unsafe_allow_html=True)
 
-        nuser = norm(user_text)
-        if nuser in exact_map:
-            tag, resp = exact_map[nuser]
-            bot_text = resp
-        else:
-            found = None
-            for npat, tag, resp in contains_list:
-                if npat and npat in nuser:
-                    found = (tag, resp); break
-            if found:
-                tag, resp = found
-                bot_text = resp
-            else:
-                intent, score = predict_intent(user_text)
-                if score < threshold:
-                    intent, score = retrieval_fallback(user_text)
-                bot_text = deterministic_response(intent)
-                log_row(st.session_state.chat_id, user_text, bot_text, "ml", intent=intent, score=score)
+        intent, score = handle_query(user_text, threshold)
+        bot_text = deterministic_response(intent)
+        log_row(st.session_state.chat_id, user_text, bot_text, "ml", intent=intent, score=score)
 
         with st.chat_message("assistant"):
             st.markdown(f"<div class='bubble bot'>{bot_text}</div>", unsafe_allow_html=True)
@@ -369,7 +328,6 @@ elif st.session_state.page == "evaluation":
             df = pd.DataFrame(data, columns=["Intent", "Precision", "Recall", "F1-score", "Support"])
             st.dataframe(df, use_container_width=True)
 
-            # ---- Graphs ----
             st.markdown("### 📊 Intent-wise Performance")
             fig_f1 = px.bar(df[df["Intent"] != "weighted_avg"],
                             x="Intent", y="F1-score",
