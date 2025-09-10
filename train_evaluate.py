@@ -22,19 +22,22 @@ nltk.download("wordnet")
 stop_words = set(stopwords.words("english"))
 lemmatizer = WordNetLemmatizer()
 
-def preprocess_text(text):
-    # Lowercase
+def preprocess_text(text: str) -> str:
     text = text.lower()
-    # Remove non-alphabetic characters
     text = re.sub(r"[^a-z\s]", "", text)
-    # Tokenize using split (no punkt required)
     tokens = text.split()
-    # Remove stopwords + lemmatize
-    tokens = [lemmatizer.lemmatize(w) for w in tokens if w not in stop_words]
-    return " ".join(tokens)
+    processed = []
+    for w in tokens:
+        if w not in stop_words:
+            lemma = lemmatizer.lemmatize(w)
+            processed.append(lemma)
+            if lemma != w:   # keep plural too
+                processed.append(w)
+    # ✅ Sort & deduplicate
+    return " ".join(sorted(set(processed)))
 
 # ---------------- Main training ----------------
-def main(data_path="data/intents_university.json", model_dir="models_dl", reports_dir="reports"):
+def main(data_path="data/intents_university.json", model_dir="models", reports_dir="reports"):
     os.makedirs(model_dir, exist_ok=True)
     os.makedirs(reports_dir, exist_ok=True)
 
@@ -85,7 +88,7 @@ def main(data_path="data/intents_university.json", model_dir="models_dl", report
 
     # --- Evaluate ---
     loss, acc = model.evaluate(X_test, y_test, verbose=0)
-    with open(os.path.join(reports_dir, "eval_dl.txt"), "w") as f:
+    with open(os.path.join(reports_dir, "eval.txt"), "w") as f:
         f.write(f"Deep Learning Model Accuracy: {acc:.3f}, Loss: {loss:.3f}\n")
 
     # --- Save artifacts ---
